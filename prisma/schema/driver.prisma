@@ -1,0 +1,10 @@
+model Driver {
+    id          String  @id @default(uuid(7))
+    userId      String  @unique
+    licenseNo   String
+    isAvailable Boolean @default(true)
+
+    user      User      @relation(fields: [userId], references: [id])
+    bookings  Booking[]
+    createdAt DateTime  @default(now())
+}

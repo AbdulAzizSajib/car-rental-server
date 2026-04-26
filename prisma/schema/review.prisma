@@ -1,0 +1,15 @@
+model Review {
+    id     String @id @default(uuid(7))
+    userId String
+    carId  String
+
+    rating  Int // 1-5
+    comment String?
+
+    createdAt DateTime @default(now())
+
+    user User @relation(fields: [userId], references: [id])
+    car  Car  @relation(fields: [carId], references: [id])
+
+    @@unique([userId, carId]) // ek user ek car e ekbar review
+}

@@ -1,0 +1,37 @@
+enum UserRole {
+    USER
+    ADMIN
+    DRIVER
+}
+
+enum BookingStatus {
+    PENDING
+    CONFIRMED
+    ONGOING
+    COMPLETED
+    CANCELLED
+}
+
+enum PaymentStatus {
+    PENDING
+    PAID
+    FAILED
+    REFUNDED
+}
+
+enum TransmissionType {
+    MANUAL
+    AUTOMATIC
+}
+
+enum FuelType {
+    PETROL
+    DIESEL
+    ELECTRIC
+    HYBRID
+}
+
+enum DiscountType {
+    PERCENTAGE
+    FIXED
+}
