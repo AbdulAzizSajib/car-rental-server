@@ -7,29 +7,29 @@ import { bookingValidation } from "./booking.validation";
 
 const bookingRouter = Router();
 
-// User routes
+// User + Host routes (hosts can rent cars too)
 bookingRouter.post(
   "/",
-  checkAuth(UserRole.USER),
+  checkAuth(UserRole.USER, UserRole.HOST),
   validateRequest(bookingValidation.createBookingSchema),
   bookingController.createBooking,
 );
 
 bookingRouter.get(
   "/my",
-  checkAuth(UserRole.USER),
+  checkAuth(UserRole.USER, UserRole.HOST),
   bookingController.getMyBookings,
 );
 
 bookingRouter.get(
   "/:id",
-  checkAuth(UserRole.USER, UserRole.ADMIN),
+  checkAuth(UserRole.USER, UserRole.ADMIN, UserRole.HOST),
   bookingController.getSingleBooking,
 );
 
 bookingRouter.patch(
   "/:id/cancel",
-  checkAuth(UserRole.USER),
+  checkAuth(UserRole.USER, UserRole.HOST),
   bookingController.cancelBooking,
 );
 

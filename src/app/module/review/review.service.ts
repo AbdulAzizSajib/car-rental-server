@@ -36,7 +36,12 @@ const createReview = async (userId: string, payload: ICreateReview) => {
   }
 
   return prisma.review.create({
-    data: { userId, carId: payload.carId, rating: payload.rating, comment: payload.comment },
+    data: {
+      userId,
+      carId: payload.carId,
+      rating: payload.rating,
+      comment: payload.comment ?? null,
+    },
     include: { user: { select: { id: true, name: true } } },
   });
 };

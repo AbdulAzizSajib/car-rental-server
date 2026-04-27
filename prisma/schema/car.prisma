@@ -10,15 +10,18 @@ model Car {
     fuelType     FuelType
     mileage      Float?
 
+    hostId      String?
     isAvailable Boolean @default(true)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    host     HostProfile? @relation(fields: [hostId], references: [id])
     images   CarImage[]
     bookings Booking[]
     reviews  Review[]
 
     @@index([brand])
     @@index([pricePerDay])
+    @@index([hostId])
 }

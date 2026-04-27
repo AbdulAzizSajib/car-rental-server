@@ -3,9 +3,12 @@ import { catchAsync } from "../../shared/catchAsync";
 import { carService } from "./car.service";
 import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
+import AppError from "../../errorHelpers/AppError";
 
 const getAllCars = catchAsync(async (req: Request, res: Response) => {
-  const result = await carService.getAllCars(req.query as Record<string, unknown>);
+  const result = await carService.getAllCars(
+    req.query as Record<string, unknown>,
+  );
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -17,7 +20,15 @@ const getAllCars = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createCarProfile = catchAsync(async (req: Request, res: Response) => {
-  const result = await carService.createCarProfile(req.body);
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
+  const result = await carService.createCarProfile(
+    req.user.userId,
+    req.user.role,
+    req.body,
+  );
 
   sendResponse(res, {
     httpStatusCode: status.CREATED,
@@ -28,8 +39,17 @@ const createCarProfile = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateCar = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
   const { id } = req.params as { id: string };
-  const result = await carService.updateCar(id, req.body);
+  const result = await carService.updateCar(
+    id,
+    req.user.userId,
+    req.user.role,
+    req.body,
+  );
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -40,8 +60,12 @@ const updateCar = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteCar = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
   const { id } = req.params as { id: string };
-  await carService.deleteCar(id);
+  await carService.deleteCar(id, req.user.userId, req.user.role);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -52,10 +76,19 @@ const deleteCar = catchAsync(async (req: Request, res: Response) => {
 });
 
 const uploadCarImages = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
   const { id } = req.params as { id: string };
   const files = req.files as Express.Multer.File[];
 
-  const result = await carService.uploadCarImages(id, files);
+  const result = await carService.uploadCarImages(
+    id,
+    req.user.userId,
+    req.user.role,
+    files,
+  );
 
   sendResponse(res, {
     httpStatusCode: status.CREATED,
@@ -66,8 +99,12 @@ const uploadCarImages = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteCarImage = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
   const { imageId } = req.params as { imageId: string };
-  await carService.deleteCarImage(imageId);
+  await carService.deleteCarImage(imageId, req.user.userId, req.user.role);
 
   sendResponse(res, {
     httpStatusCode: status.OK,

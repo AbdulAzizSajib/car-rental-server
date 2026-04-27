@@ -14,15 +14,17 @@ interface IRegisterUserPayload {
   name: string;
   email: string;
   password: string;
+  phone: string;
 }
 
 const registerUser = async (payload: IRegisterUserPayload) => {
-  const { name, email, password } = payload;
+  const { name, email, password, phone } = payload;
   const data = await auth.api.signUpEmail({
     body: {
       name,
       email,
       password,
+      phone,
     },
   });
 
@@ -37,6 +39,7 @@ const registerUser = async (payload: IRegisterUserPayload) => {
       name: data.user.name,
       email: data.user.email,
       emailVerified: data.user.emailVerified,
+      phone: data.user.phone,
     },
     requiresEmailVerification: true,
   };
@@ -305,7 +308,10 @@ const resetPassword = async (
   });
 };
 
-const resendOTP = async (email: string, type: "email-verification" | "forget-password") => {
+const resendOTP = async (
+  email: string,
+  type: "email-verification" | "forget-password",
+) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {

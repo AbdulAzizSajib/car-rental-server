@@ -19,6 +19,7 @@ import driverRouter from "./module/driver/driver.router";
 import reviewRouter from "./module/review/review.router";
 import couponRouter from "./module/coupon/coupon.router";
 import dashboardRouter from "./module/dashboard/dashboard.router";
+import hostRouter from "./module/host/host.router";
 
 const app: Express = express();
 
@@ -76,6 +77,7 @@ app.use("/drivers", driverRouter);
 app.use("/reviews", reviewRouter);
 app.use("/coupons", couponRouter);
 app.use("/admin/dashboard", dashboardRouter);
+app.use("/hosts", hostRouter);
 
 app.use(globalErrorHandler);
 app.use(notFoundMiddleware);

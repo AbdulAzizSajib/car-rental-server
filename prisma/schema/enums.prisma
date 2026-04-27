@@ -2,6 +2,7 @@ enum UserRole {
     USER
     ADMIN
     DRIVER
+    HOST
 }
 
 enum BookingStatus {

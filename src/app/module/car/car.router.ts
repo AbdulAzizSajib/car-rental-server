@@ -12,30 +12,34 @@ carRouter.get("/", carController.getAllCars);
 
 carRouter.post(
   "/create",
-  checkAuth(UserRole.ADMIN),
+  checkAuth(UserRole.ADMIN, UserRole.HOST),
   validateRequest(carValidation.createCarSchema),
   carController.createCarProfile,
 );
 
 carRouter.patch(
   "/:id",
-  checkAuth(UserRole.ADMIN),
+  checkAuth(UserRole.ADMIN, UserRole.HOST),
   validateRequest(carValidation.updateCarSchema),
   carController.updateCar,
 );
 
-carRouter.delete("/:id", checkAuth(UserRole.ADMIN), carController.deleteCar);
+carRouter.delete(
+  "/:id",
+  checkAuth(UserRole.ADMIN, UserRole.HOST),
+  carController.deleteCar,
+);
 
 carRouter.post(
   "/:id/images",
-  checkAuth(UserRole.ADMIN),
+  checkAuth(UserRole.ADMIN, UserRole.HOST),
   multerUpload.array("images", 10),
   carController.uploadCarImages,
 );
 
 carRouter.delete(
   "/images/:imageId",
-  checkAuth(UserRole.ADMIN),
+  checkAuth(UserRole.ADMIN, UserRole.HOST),
   carController.deleteCarImage,
 );
 

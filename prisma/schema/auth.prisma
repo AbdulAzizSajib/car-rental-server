@@ -15,6 +15,7 @@ model User {
     reviews  Review[]
 
     driverProfile Driver?
+    hostProfile   HostProfile?
 
     @@unique([email])
     @@map("user")
