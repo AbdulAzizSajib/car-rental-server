@@ -18,6 +18,15 @@ enum PaymentStatus {
     PAID
     FAILED
     REFUNDED
+    CANCELLED
+}
+
+enum PaymentMethod {
+    BKASH
+    NAGAD
+    STRIPE
+    CASH_ON_DELIVERY
+    BANK_TRANSFER
 }
 
 enum TransmissionType {
@@ -35,4 +44,28 @@ enum FuelType {
 enum DiscountType {
     PERCENTAGE
     FIXED
+}
+
+enum BodyType {
+    Sedan
+    Wagon
+    Coupe
+    Hatchback
+    Pickup
+    Sport_coupe
+    Crossover
+    Van
+}
+
+enum VerificationStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum DriverStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    SUSPENDED
 }

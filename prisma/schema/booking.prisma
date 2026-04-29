@@ -4,26 +4,36 @@ model Booking {
     carId    String
     driverId String?
 
+    // Locations
     pickupLocation String
     dropLocation   String
 
+    // Schedule
     startDate DateTime
     endDate   DateTime
 
+    // Pricing Breakdown
+    basePrice  Float // Per day price * days
+    serviceFee Float @default(0.0)
     totalPrice Float
 
-    status BookingStatus @default(PENDING)
+    // Coordination
+    status         BookingStatus @default(PENDING)
+    tripType       String? // e.g., "ONE_WAY", "ROUND_TRIP"
+    contactNumber  String? // Direct contact for this trip
+    specialRequest String?       @db.Text
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    user   User    @relation(fields: [userId], references: [id])
-    car    Car     @relation(fields: [carId], references: [id])
-    driver Driver? @relation(fields: [driverId], references: [id])
-
+    // Relations
+    user    User     @relation(fields: [userId], references: [id])
+    car     Car      @relation(fields: [carId], references: [id])
+    driver  Driver?  @relation(fields: [driverId], references: [id])
     payment Payment?
 
     @@index([userId])
     @@index([carId])
     @@index([status])
+    @@index([startDate, endDate]) // Search optimizing for date ranges
 }

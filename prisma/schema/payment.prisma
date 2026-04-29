@@ -2,12 +2,21 @@ model Payment {
     id        String @id @default(uuid(7))
     bookingId String @unique
 
-    amount        Float
-    status        PaymentStatus @default(PENDING)
-    method        String // bkash, nagad, stripe etc
-    transactionId String?
+    amount Float
+    status PaymentStatus @default(PENDING)
+    method PaymentMethod
+
+    // Gateway related
+    transactionId   String? @unique
+    gatewayResponse Json? // To store full API response from bKash/Nagad
+
+    currency String    @default("BDT")
+    paidAt   DateTime? // When the status changed to PAID
 
     createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     booking Booking @relation(fields: [bookingId], references: [id])
+
+    @@index([transactionId])
 }

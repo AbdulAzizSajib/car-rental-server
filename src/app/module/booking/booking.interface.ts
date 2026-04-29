@@ -7,6 +7,9 @@ export interface ICreateBooking {
   dropLocation: string;
   startDate: Date;
   endDate: Date;
+  tripType?: string;
+  contactNumber?: string;
+  specialRequest?: string;
 }
 
 export interface IUpdateBookingStatus {

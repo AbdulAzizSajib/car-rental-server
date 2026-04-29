@@ -1,7 +1,8 @@
 model CarImage {
-    id    String @id @default(uuid(7))
-    url   String
-    carId String
+    id        String  @id @default(uuid(7))
+    url       String
+    carId     String
+    isPrimary Boolean @default(false) // First image to show in search
 
     car Car @relation(fields: [carId], references: [id], onDelete: Cascade)
 }

@@ -1,6 +1,7 @@
 import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
+import { Prisma } from "../../../generated/prisma/client";
 import { PaymentStatus } from "../../../generated/prisma/enums";
 import { buildMeta, buildQuery } from "../../utils/queryBuilder";
 import { ICreatePayment, IUpdatePaymentStatus } from "./payment.interface";
@@ -32,7 +33,9 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
       data: {
         method: payload.method,
         transactionId: payload.transactionId ?? null,
+        gatewayResponse: (payload.gatewayResponse as Prisma.InputJsonValue) ?? Prisma.DbNull,
         status: PaymentStatus.PENDING,
+        paidAt: null,
       },
       include: { booking: true },
     });
@@ -44,6 +47,7 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
       amount: booking.totalPrice,
       method: payload.method,
       transactionId: payload.transactionId ?? null,
+      gatewayResponse: (payload.gatewayResponse as Prisma.InputJsonValue) ?? Prisma.DbNull,
     },
     include: { booking: true },
   });
@@ -115,13 +119,14 @@ const updatePaymentStatus = async (
     throw new AppError(status.NOT_FOUND, "Payment not found");
   }
 
-  return prisma.payment.update({
-    where: { id: paymentId },
-    data: {
-      status: payload.status,
-      ...(payload.transactionId && { transactionId: payload.transactionId }),
-    },
-  });
+  const updateData: Prisma.PaymentUpdateInput = {
+    status: payload.status,
+    paidAt: payload.status === PaymentStatus.PAID ? new Date() : null,
+  };
+  if (payload.transactionId) updateData.transactionId = payload.transactionId;
+  if (payload.gatewayResponse) updateData.gatewayResponse = payload.gatewayResponse as Prisma.InputJsonValue;
+
+  return prisma.payment.update({ where: { id: paymentId }, data: updateData });
 };
 
 const getAllPayments = async (query: Record<string, unknown>) => {

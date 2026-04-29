@@ -1,15 +1,18 @@
 model Review {
-    id     String @id @default(uuid(7))
-    userId String
-    carId  String
+    id       String  @id @default(uuid(7))
+    userId   String
+    carId    String? // Optional: jodi sudhu driver ke review dey
+    driverId String? // Optional: jodi sudhu gari ke review dey
 
     rating  Int // 1-5
-    comment String?
+    comment String? @db.Text
 
     createdAt DateTime @default(now())
 
-    user User @relation(fields: [userId], references: [id])
-    car  Car  @relation(fields: [carId], references: [id])
+    user   User    @relation(fields: [userId], references: [id])
+    car    Car?    @relation(fields: [carId], references: [id])
+    driver Driver? @relation(fields: [driverId], references: [id])
 
-    @@unique([userId, carId]) // ek user ek car e ekbar review
+    @@unique([userId, carId])
+    @@index([driverId])
 }

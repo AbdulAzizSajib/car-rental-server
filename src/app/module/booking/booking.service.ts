@@ -59,7 +59,9 @@ const createBooking = async (userId: string, payload: ICreateBooking) => {
   const days = Math.ceil(
     (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );
-  const totalPrice = car.pricePerDay * days;
+  const basePrice = car.pricePerDay * days;
+  const serviceFee = 0;
+  const totalPrice = basePrice + serviceFee;
 
   const booking = await prisma.booking.create({
     data: {
@@ -70,7 +72,12 @@ const createBooking = async (userId: string, payload: ICreateBooking) => {
       dropLocation: payload.dropLocation,
       startDate,
       endDate,
+      basePrice,
+      serviceFee,
       totalPrice,
+      tripType: payload.tripType ?? null,
+      contactNumber: payload.contactNumber ?? null,
+      specialRequest: payload.specialRequest ?? null,
     },
     include: { car: { include: { images: true } }, driver: true },
   });

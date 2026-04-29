@@ -9,6 +9,8 @@ const reviewRouter = Router();
 
 reviewRouter.get("/", reviewController.getCarReviews);
 
+reviewRouter.get("/driver", reviewController.getDriverReviews);
+
 reviewRouter.post(
   "/",
   checkAuth(UserRole.USER),

@@ -4,11 +4,20 @@ model Car {
     brand        String
     model        String
     year         Int
+    bodyType     BodyType // Missing in your schema
     pricePerDay  Float
     seats        Int
     transmission TransmissionType
     fuelType     FuelType
     mileage      Float?
+
+    // Bangladesh Market specific
+    engineCapacity Int? // cc
+    color          String?
+    registrationNo String? @unique
+    location       String // e.g., "Banani, Dhaka"
+    isAC           Boolean @default(true)
+    isWithDriver   Boolean @default(false)
 
     hostId      String?
     isAvailable Boolean @default(true)
@@ -24,4 +33,5 @@ model Car {
     @@index([brand])
     @@index([pricePerDay])
     @@index([hostId])
+    @@index([location]) // Index for faster searching
 }

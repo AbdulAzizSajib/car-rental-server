@@ -8,6 +8,9 @@ const createBookingSchema = z.object({
   dropLocation: z.string().min(1),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
+  tripType: z.string().min(1).optional(),
+  contactNumber: z.string().min(1).optional(),
+  specialRequest: z.string().min(1).optional(),
 });
 
 const updateStatusSchema = z.object({

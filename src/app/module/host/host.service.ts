@@ -1,7 +1,7 @@
 import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
-import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
+import { BookingStatus, UserRole, VerificationStatus } from "../../../generated/prisma/enums";
 import { buildMeta, buildQuery } from "../../utils/queryBuilder";
 import { IUpdateHostProfile } from "./host.interface";
 
@@ -158,7 +158,7 @@ const getDashboard = async (userId: string) => {
 // Admin
 const getAllHosts = async (query: Record<string, unknown>) => {
   const { where, orderBy, skip, take, page, limit } = buildQuery(query, {
-    filterableFields: ["isVerified"],
+    filterableFields: ["isVerified", "verificationStatus"],
     sortableFields: ["createdAt"],
     defaultSortBy: "createdAt",
     defaultSortOrder: "desc",
@@ -190,7 +190,7 @@ const verifyHost = async (hostId: string) => {
 
   return prisma.hostProfile.update({
     where: { id: hostId },
-    data: { isVerified: true },
+    data: { isVerified: true, verificationStatus: VerificationStatus.APPROVED },
   });
 };
 

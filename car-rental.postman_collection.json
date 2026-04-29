@@ -522,6 +522,107 @@
       ]
     },
     {
+      "name": "Hosts",
+      "item": [
+        {
+          "name": "Become Host (User)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/hosts/become-host"
+          }
+        },
+        {
+          "name": "Get My Host Profile (Host)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/hosts/me"
+          }
+        },
+        {
+          "name": "Update My Host Profile (Host)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/hosts/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Experienced host with a fleet of well-maintained cars.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Cars (Host)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/hosts/me/cars?page=1&limit=10&search=toyota&brand=Toyota&fuelType=PETROL&transmission=AUTOMATIC&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["hosts", "me", "cars"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "toyota", "disabled": true },
+                { "key": "brand", "value": "Toyota", "disabled": true },
+                { "key": "fuelType", "value": "PETROL", "disabled": true },
+                { "key": "transmission", "value": "AUTOMATIC", "disabled": true },
+                { "key": "isAvailable", "value": "true", "disabled": true },
+                { "key": "sortBy", "value": "pricePerDay", "disabled": true },
+                { "key": "sortOrder", "value": "asc", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Car Bookings (Host)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/hosts/me/bookings?page=1&limit=10&status=PENDING&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["hosts", "me", "bookings"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "PENDING", "disabled": true },
+                { "key": "sortBy", "value": "createdAt", "disabled": true },
+                { "key": "sortOrder", "value": "desc", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Host Dashboard (Host)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/hosts/me/dashboard"
+          }
+        },
+        {
+          "name": "Get All Hosts (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/hosts?page=1&limit=10&isVerified=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["hosts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "isVerified", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Host (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/hosts/:id/verify"
+          }
+        }
+      ]
+    },
+    {
       "name": "Admin Dashboard",
       "item": [
         {

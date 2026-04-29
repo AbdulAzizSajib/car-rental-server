@@ -6,7 +6,7 @@ import { carValidation } from "./car.validation";
 import { checkAuth } from "../../middleware/checkAuth";
 import { UserRole } from "../../../generated/prisma/enums";
 
-const carRouter = Router();
+const carRouter: Router = Router();
 
 carRouter.get("/", carController.getAllCars);
 
@@ -35,6 +35,12 @@ carRouter.post(
   checkAuth(UserRole.ADMIN, UserRole.HOST),
   multerUpload.array("images", 10),
   carController.uploadCarImages,
+);
+
+carRouter.patch(
+  "/images/:imageId/primary",
+  checkAuth(UserRole.ADMIN, UserRole.HOST),
+  carController.setPrimaryImage,
 );
 
 carRouter.delete(

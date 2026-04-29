@@ -13,7 +13,7 @@ const getAllCars = async (query: Record<string, unknown>) => {
   const { where, orderBy, skip, take, page, limit } = buildQuery(query, {
     searchFields: ["name", "brand", "model"],
     sortableFields: ["pricePerDay", "year", "createdAt"],
-    filterableFields: ["brand", "fuelType", "transmission", "isAvailable", "seats", "hostId"],
+    filterableFields: ["brand", "fuelType", "transmission", "bodyType", "isAvailable", "isAC", "isWithDriver", "seats", "location", "hostId"],
     defaultSortBy: "createdAt",
     defaultSortOrder: "desc",
   });
@@ -92,11 +92,18 @@ const createCarProfile = async (
       brand: payload.brand,
       model: payload.model,
       year: payload.year,
+      bodyType: payload.bodyType,
       pricePerDay: payload.pricePerDay,
       seats: payload.seats,
       transmission: payload.transmission,
       fuelType: payload.fuelType,
       mileage: payload.mileage ?? null,
+      engineCapacity: payload.engineCapacity ?? null,
+      color: payload.color ?? null,
+      registrationNo: payload.registrationNo ?? null,
+      location: payload.location,
+      isAC: payload.isAC ?? true,
+      isWithDriver: payload.isWithDriver ?? false,
       isAvailable: payload.isAvailable ?? true,
       hostId,
     },
@@ -158,6 +165,8 @@ const uploadCarImages = async (
     if (!car) throw new AppError(status.NOT_FOUND, "Car not found");
   }
 
+  const existingCount = await prisma.carImage.count({ where: { carId: id } });
+
   const uploaded = await Promise.all(
     files.map((file) =>
       uploadFileToCloudinary(file.buffer, file.originalname, {
@@ -167,8 +176,46 @@ const uploadCarImages = async (
   );
 
   return prisma.carImage.createManyAndReturn({
-    data: uploaded.map((result) => ({ url: result.secure_url, carId: id })),
+    data: uploaded.map((result, index) => ({
+      url: result.secure_url,
+      carId: id,
+      isPrimary: existingCount === 0 && index === 0,
+    })),
   });
+};
+
+const setPrimaryImage = async (
+  imageId: string,
+  userId: string,
+  role: UserRole,
+) => {
+  const image = await prisma.carImage.findUnique({
+    where: { id: imageId },
+    include: { car: { include: { host: true } } },
+  });
+
+  if (!image) {
+    throw new AppError(status.NOT_FOUND, "Image not found");
+  }
+
+  if (role === UserRole.HOST) {
+    if (!image.car.host || image.car.host.userId !== userId) {
+      throw new AppError(status.FORBIDDEN, "You do not have permission to manage this car");
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.carImage.updateMany({
+      where: { carId: image.carId, isPrimary: true },
+      data: { isPrimary: false },
+    }),
+    prisma.carImage.update({
+      where: { id: imageId },
+      data: { isPrimary: true },
+    }),
+  ]);
+
+  return prisma.carImage.findUnique({ where: { id: imageId } });
 };
 
 const deleteCarImage = async (
@@ -193,6 +240,13 @@ const deleteCarImage = async (
 
   await deleteFileFromCloudinary(image.url);
   await prisma.carImage.delete({ where: { id: imageId } });
+
+  if (image.isPrimary) {
+    const next = await prisma.carImage.findFirst({ where: { carId: image.carId } });
+    if (next) {
+      await prisma.carImage.update({ where: { id: next.id }, data: { isPrimary: true } });
+    }
+  }
 };
 
 export const carService = {
@@ -201,5 +255,6 @@ export const carService = {
   updateCar,
   deleteCar,
   uploadCarImages,
+  setPrimaryImage,
   deleteCarImage,
 };

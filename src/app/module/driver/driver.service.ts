@@ -20,16 +20,22 @@ const createDriver = async (payload: ICreateDriver) => {
   }
 
   return prisma.driver.create({
-    data: { userId: payload.userId, licenseNo: payload.licenseNo },
+    data: {
+      userId: payload.userId,
+      licenseNo: payload.licenseNo,
+      ...(payload.licenseImage !== undefined && { licenseImage: payload.licenseImage }),
+      ...(payload.yearsOfExperience !== undefined && { yearsOfExperience: payload.yearsOfExperience }),
+      ...(payload.location !== undefined && { location: payload.location }),
+    },
     include: { user: { select: { id: true, name: true, email: true } } },
   });
 };
 
 const getAllDrivers = async (query: Record<string, unknown>) => {
   const { where, orderBy, skip, take, page, limit } = buildQuery(query, {
-    filterableFields: ["isAvailable"],
+    filterableFields: ["isAvailable", "status", "location"],
     searchFields: ["licenseNo"],
-    sortableFields: ["createdAt"],
+    sortableFields: ["createdAt", "averageRating", "totalTrips"],
     defaultSortBy: "createdAt",
     defaultSortOrder: "desc",
   });

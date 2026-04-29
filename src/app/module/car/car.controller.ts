@@ -98,6 +98,22 @@ const uploadCarImages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const setPrimaryImage = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
+  }
+
+  const { imageId } = req.params as { imageId: string };
+  const result = await carService.setPrimaryImage(imageId, req.user.userId, req.user.role);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Primary image updated successfully",
+    data: result,
+  });
+});
+
 const deleteCarImage = catchAsync(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
@@ -120,5 +136,6 @@ export const carController = {
   updateCar,
   deleteCar,
   uploadCarImages,
+  setPrimaryImage,
   deleteCarImage,
 };

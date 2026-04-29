@@ -1,10 +1,29 @@
 model Driver {
-    id          String  @id @default(uuid(7))
-    userId      String  @unique
-    licenseNo   String
-    isAvailable Boolean @default(true)
+    id     String @id @default(uuid(7))
+    userId String @unique
 
-    user      User      @relation(fields: [userId], references: [id])
-    bookings  Booking[]
-    createdAt DateTime  @default(now())
+    // Professional Info
+    licenseNo         String  @unique
+    licenseImage      String? // Image URL
+    yearsOfExperience Int     @default(0)
+
+    // Status & Availability
+    isAvailable Boolean      @default(true)
+    status      DriverStatus @default(PENDING)
+
+    // Tracking & Stats
+    location      String? // Which city/area they serve
+    totalTrips    Int     @default(0)
+    averageRating Float   @default(0.0)
+
+    // Relations
+    user     User      @relation(fields: [userId], references: [id])
+    bookings Booking[]
+    reviews  Review[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([location])
 }

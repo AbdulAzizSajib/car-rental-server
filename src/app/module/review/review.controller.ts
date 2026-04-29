@@ -31,6 +31,22 @@ const getCarReviews = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getDriverReviews = catchAsync(async (req: Request, res: Response) => {
+  const { driverId } = req.query as { driverId: string };
+  const result = await reviewService.getDriverReviews(
+    driverId,
+    req.query as Record<string, unknown>,
+  );
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Driver reviews fetched successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 const deleteReview = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
   await reviewService.deleteReview(id);
@@ -43,4 +59,4 @@ const deleteReview = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const reviewController = { createReview, getCarReviews, deleteReview };
+export const reviewController = { createReview, getCarReviews, getDriverReviews, deleteReview };

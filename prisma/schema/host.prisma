@@ -1,8 +1,22 @@
 model HostProfile {
-    id         String   @id @default(uuid(7))
-    userId     String   @unique
-    bio        String?
-    isVerified Boolean  @default(false)
+    id     String  @id @default(uuid(7))
+    userId String  @unique
+    bio    String? @db.Text
+
+    // Identity & Verification
+    nidNumber          String?            @unique
+    nidFrontImage      String?
+    nidBackImage       String?
+    verificationStatus VerificationStatus @default(PENDING)
+    isVerified         Boolean            @default(false)
+
+    // Location & Contact
+    address          String?
+    emergencyContact String?
+
+    // Stats (Optional: for performance)
+    totalEarnings Float @default(0.0)
+    averageRating Float @default(0.0)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
