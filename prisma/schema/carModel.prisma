@@ -1,0 +1,7 @@
+model CarModel {
+    id      String @id @default(uuid(7))
+    name    String // e.g., "Corolla"
+    brandId String
+    brand   Brand  @relation(fields: [brandId], references: [id])
+    cars    Car[]
+}

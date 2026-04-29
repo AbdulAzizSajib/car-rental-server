@@ -1,12 +1,18 @@
-import { BodyType, FuelType, TransmissionType } from "../../../generated/prisma/enums";
+import {
+  BodyType,
+  FuelType,
+  RentalType,
+  TransmissionType,
+} from "../../../generated/prisma/enums";
 
 export interface ICreateCar {
   name: string;
-  brand: string;
-  model: string;
+  brandId: string;
+  modelId: string;
   year: number;
   bodyType: BodyType;
   pricePerDay: number;
+  rentalType?: RentalType;
   seats: number;
   transmission: TransmissionType;
   fuelType: FuelType;
@@ -22,11 +28,12 @@ export interface ICreateCar {
 
 export interface IUpdateCar {
   name?: string;
-  brand?: string;
-  model?: string;
+  brandId?: string;
+  modelId?: string;
   year?: number;
   bodyType?: BodyType;
   pricePerDay?: number;
+  rentalType?: RentalType;
   seats?: number;
   transmission?: TransmissionType;
   fuelType?: FuelType;

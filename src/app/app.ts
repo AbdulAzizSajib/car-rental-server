@@ -13,6 +13,8 @@ import { envVars } from "./config/env";
 import { auth } from "./lib/auth";
 import { prisma } from "./lib/prisma";
 import carRouter from "./module/car/car.router";
+import brandRouter from "./module/brand/brand.router";
+import carModelRouter from "./module/car-model/car-model.router";
 import bookingRouter from "./module/booking/booking.router";
 import paymentRouter from "./module/payment/payment.router";
 import driverRouter from "./module/driver/driver.router";
@@ -72,6 +74,8 @@ app.get("/db-test", async (req, res) => {
 });
 
 app.use("/cars", carRouter);
+app.use("/brands", brandRouter);
+app.use("/car-models", carModelRouter);
 app.use("/bookings", bookingRouter);
 app.use("/payments", paymentRouter);
 app.use("/drivers", driverRouter);

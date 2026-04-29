@@ -1,7 +1,11 @@
 import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
-import { BookingStatus, UserRole, VerificationStatus } from "../../../generated/prisma/enums";
+import {
+  BookingStatus,
+  UserRole,
+  VerificationStatus,
+} from "../../../generated/prisma/enums";
 import { buildMeta, buildQuery } from "../../utils/queryBuilder";
 import { IUpdateHostProfile } from "./host.interface";
 
@@ -18,7 +22,10 @@ const becomeHost = async (userId: string) => {
 
   const [hostProfile] = await prisma.$transaction([
     prisma.hostProfile.create({ data: { userId } }),
-    prisma.user.update({ where: { id: userId }, data: { role: UserRole.HOST } }),
+    prisma.user.update({
+      where: { id: userId },
+      data: { role: UserRole.HOST },
+    }),
   ]);
 
   return hostProfile;
@@ -51,21 +58,65 @@ const updateMyProfile = async (userId: string, payload: IUpdateHostProfile) => {
 };
 
 const getMyCars = async (userId: string, query: Record<string, unknown>) => {
-  const hostProfile = await prisma.hostProfile.findUnique({ where: { userId } });
+  const hostProfile = await prisma.hostProfile.findUnique({
+    where: { userId },
+  });
 
   if (!hostProfile) {
     throw new AppError(status.NOT_FOUND, "Host profile not found");
   }
 
   const { where, orderBy, skip, take, page, limit } = buildQuery(query, {
-    searchFields: ["name", "brand", "model"],
+    searchFields: [],
     sortableFields: ["pricePerDay", "year", "createdAt"],
-    filterableFields: ["brand", "fuelType", "transmission", "isAvailable"],
+    filterableFields: [
+      "brandId",
+      "modelId",
+      "fuelType",
+      "transmission",
+      "rentalType",
+      "isAvailable",
+    ],
     defaultSortBy: "createdAt",
     defaultSortOrder: "desc",
   });
 
-  const finalWhere = { ...where, hostId: hostProfile.id };
+  const andConditions = Array.isArray(where.AND) ? [...where.AND] : [];
+
+  const searchTerm =
+    typeof query.search === "string" ? query.search.trim() : "";
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { brand: { name: { contains: searchTerm, mode: "insensitive" } } },
+        { model: { name: { contains: searchTerm, mode: "insensitive" } } },
+      ],
+    });
+  }
+
+  const priceFrom = query.priceFrom;
+  if (priceFrom !== undefined && priceFrom !== null && priceFrom !== "") {
+    const fromValue = Number(priceFrom);
+    if (!Number.isNaN(fromValue)) {
+      andConditions.push({ pricePerDay: { gte: fromValue } });
+    }
+  }
+
+  const priceTo = query.priceTo;
+  if (priceTo !== undefined && priceTo !== null && priceTo !== "") {
+    const toValue = Number(priceTo);
+    if (!Number.isNaN(toValue)) {
+      andConditions.push({ pricePerDay: { lte: toValue } });
+    }
+  }
+
+  andConditions.push({ hostId: hostProfile.id });
+
+  const finalWhere =
+    andConditions.length > 0
+      ? { AND: andConditions }
+      : { hostId: hostProfile.id };
 
   const [cars, total] = await Promise.all([
     prisma.car.findMany({
@@ -73,7 +124,7 @@ const getMyCars = async (userId: string, query: Record<string, unknown>) => {
       orderBy,
       skip,
       take,
-      include: { images: true },
+      include: { brand: true, model: true, images: true },
     }),
     prisma.car.count({ where: finalWhere }),
   ]);
@@ -85,7 +136,9 @@ const getMyCarBookings = async (
   userId: string,
   query: Record<string, unknown>,
 ) => {
-  const hostProfile = await prisma.hostProfile.findUnique({ where: { userId } });
+  const hostProfile = await prisma.hostProfile.findUnique({
+    where: { userId },
+  });
 
   if (!hostProfile) {
     throw new AppError(status.NOT_FOUND, "Host profile not found");
@@ -119,7 +172,9 @@ const getMyCarBookings = async (
 };
 
 const getDashboard = async (userId: string) => {
-  const hostProfile = await prisma.hostProfile.findUnique({ where: { userId } });
+  const hostProfile = await prisma.hostProfile.findUnique({
+    where: { userId },
+  });
 
   if (!hostProfile) {
     throw new AppError(status.NOT_FOUND, "Host profile not found");
@@ -127,24 +182,29 @@ const getDashboard = async (userId: string) => {
 
   const hostId = hostProfile.id;
 
-  const [totalCars, totalBookings, earnings, activeBookings, completedBookings] =
-    await Promise.all([
-      prisma.car.count({ where: { hostId } }),
-      prisma.booking.count({ where: { car: { hostId } } }),
-      prisma.payment.aggregate({
-        _sum: { amount: true },
-        where: { status: "PAID", booking: { car: { hostId } } },
-      }),
-      prisma.booking.count({
-        where: {
-          car: { hostId },
-          status: { in: [BookingStatus.CONFIRMED, BookingStatus.ONGOING] },
-        },
-      }),
-      prisma.booking.count({
-        where: { car: { hostId }, status: BookingStatus.COMPLETED },
-      }),
-    ]);
+  const [
+    totalCars,
+    totalBookings,
+    earnings,
+    activeBookings,
+    completedBookings,
+  ] = await Promise.all([
+    prisma.car.count({ where: { hostId } }),
+    prisma.booking.count({ where: { car: { hostId } } }),
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: { status: "PAID", booking: { car: { hostId } } },
+    }),
+    prisma.booking.count({
+      where: {
+        car: { hostId },
+        status: { in: [BookingStatus.CONFIRMED, BookingStatus.ONGOING] },
+      },
+    }),
+    prisma.booking.count({
+      where: { car: { hostId }, status: BookingStatus.COMPLETED },
+    }),
+  ]);
 
   return {
     totalCars,

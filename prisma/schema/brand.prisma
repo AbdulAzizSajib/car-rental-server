@@ -1,0 +1,7 @@
+model Brand {
+    id     String     @id @default(uuid(7))
+    name   String     @unique // e.g., "Toyota"
+    logo   String? // Image URL for the brand logo
+    models CarModel[]
+    cars   Car[]
+}

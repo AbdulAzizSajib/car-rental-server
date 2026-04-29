@@ -1,15 +1,25 @@
 import { z } from "zod";
-import { BodyType, FuelType, TransmissionType } from "../../../generated/prisma/enums";
+import {
+  BodyType,
+  FuelType,
+  RentalType,
+  TransmissionType,
+} from "../../../generated/prisma/enums";
 
 const createCarSchema = z.object({
   name: z.string().min(1),
-  brand: z.string().min(1),
-  model: z.string().min(1),
+  brandId: z.string().min(1),
+  modelId: z.string().min(1),
   year: z.number().int().min(1886),
   bodyType: z.enum(Object.values(BodyType) as [string, ...string[]]),
   pricePerDay: z.number().positive(),
+  rentalType: z
+    .enum(Object.values(RentalType) as [string, ...string[]])
+    .default(RentalType.ANY),
   seats: z.number().int().positive(),
-  transmission: z.enum(Object.values(TransmissionType) as [string, ...string[]]),
+  transmission: z.enum(
+    Object.values(TransmissionType) as [string, ...string[]],
+  ),
   fuelType: z.enum(Object.values(FuelType) as [string, ...string[]]),
   mileage: z.number().positive().optional(),
   engineCapacity: z.number().int().positive().optional(),
@@ -23,13 +33,18 @@ const createCarSchema = z.object({
 
 const updateCarSchema = z.object({
   name: z.string().min(1).optional(),
-  brand: z.string().min(1).optional(),
-  model: z.string().min(1).optional(),
+  brandId: z.string().min(1).optional(),
+  modelId: z.string().min(1).optional(),
   year: z.number().int().min(1886).optional(),
   bodyType: z.enum(Object.values(BodyType) as [string, ...string[]]).optional(),
   pricePerDay: z.number().positive().optional(),
+  rentalType: z
+    .enum(Object.values(RentalType) as [string, ...string[]])
+    .optional(),
   seats: z.number().int().positive().optional(),
-  transmission: z.enum(Object.values(TransmissionType) as [string, ...string[]]).optional(),
+  transmission: z
+    .enum(Object.values(TransmissionType) as [string, ...string[]])
+    .optional(),
   fuelType: z.enum(Object.values(FuelType) as [string, ...string[]]).optional(),
   mileage: z.number().positive().nullable().optional(),
   engineCapacity: z.number().int().positive().nullable().optional(),

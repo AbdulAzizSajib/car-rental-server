@@ -114,6 +114,27 @@
               "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"newpassword123\"\n}"
             }
           }
+        },
+        {
+          "name": "Google Login",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/login/google"
+          }
+        },
+        {
+          "name": "Google Login Success",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/google/success"
+          }
+        },
+        {
+          "name": "OAuth Error",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/oauth/error"
+          }
         }
       ]
     },
@@ -149,6 +170,106 @@
       ]
     },
     {
+      "name": "Brands",
+      "item": [
+        {
+          "name": "Get All Brands",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/brands?page=1&limit=10&search=toyota"
+          }
+        },
+        {
+          "name": "Get Single Brand",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/brands/:id"
+          }
+        },
+        {
+          "name": "Create Brand (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/brands",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Toyota\",\n  \"logo\": \"https://example.com/toyota-logo.png\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Brand (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/brands/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Toyota Motor\",\n  \"logo\": \"https://example.com/toyota-new-logo.png\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Brand (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/brands/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Car Models",
+      "item": [
+        {
+          "name": "Get All Car Models",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/car-models?page=1&limit=10&search=corolla&brandId=<brand-uuid>"
+          }
+        },
+        {
+          "name": "Get Single Car Model",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/car-models/:id"
+          }
+        },
+        {
+          "name": "Create Car Model (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/car-models",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Corolla\",\n  \"brandId\": \"<brand-uuid>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Car Model (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/car-models/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Corolla Cross\",\n  \"brandId\": \"<brand-uuid>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Car Model (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/car-models/:id"
+          }
+        }
+      ]
+    },
+    {
       "name": "Cars",
       "item": [
         {
@@ -156,16 +277,24 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/cars?page=1&limit=10&search=toyota&brand=Toyota&fuelType=PETROL&transmission=AUTOMATIC&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
+              "raw": "{{baseUrl}}/cars?page=1&limit=10&search=toyota&brandId=<brand-uuid>&modelId=<model-uuid>&fuelType=PETROL&transmission=AUTOMATIC&rentalType=PER_DAY&priceFrom=3000&priceTo=8000&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
               "host": ["{{baseUrl}}"],
               "path": ["cars"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
                 { "key": "search", "value": "toyota", "disabled": true },
-                { "key": "brand", "value": "Toyota", "disabled": true },
+                { "key": "brandId", "value": "<brand-uuid>", "disabled": true },
+                { "key": "modelId", "value": "<model-uuid>", "disabled": true },
                 { "key": "fuelType", "value": "PETROL", "disabled": true },
-                { "key": "transmission", "value": "AUTOMATIC", "disabled": true },
+                {
+                  "key": "transmission",
+                  "value": "AUTOMATIC",
+                  "disabled": true
+                },
+                { "key": "rentalType", "value": "PER_DAY", "disabled": true },
+                { "key": "priceFrom", "value": "3000", "disabled": true },
+                { "key": "priceTo", "value": "8000", "disabled": true },
                 { "key": "isAvailable", "value": "true", "disabled": true },
                 { "key": "sortBy", "value": "pricePerDay", "disabled": true },
                 { "key": "sortOrder", "value": "asc", "disabled": true }
@@ -174,38 +303,38 @@
           }
         },
         {
-          "name": "Create Car (Admin)",
+          "name": "Create Car (Host/Admin)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/cars/create",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Corolla 2022\",\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2022,\n  \"pricePerDay\": 50,\n  \"seats\": 5,\n  \"transmission\": \"AUTOMATIC\",\n  \"fuelType\": \"PETROL\",\n  \"mileage\": 15000,\n  \"isAvailable\": true\n}"
+              "raw": "{\n  \"name\": \"Corolla 2022\",\n  \"brandId\": \"<brand-uuid>\",\n  \"modelId\": \"<model-uuid>\",\n  \"year\": 2022,\n  \"bodyType\": \"SEDAN\",\n  \"pricePerDay\": 5000,\n  \"rentalType\": \"PER_DAY\",\n  \"seats\": 5,\n  \"transmission\": \"AUTOMATIC\",\n  \"fuelType\": \"PETROL\",\n  \"mileage\": 15000,\n  \"engineCapacity\": 1600,\n  \"color\": \"Silver\",\n  \"registrationNo\": \"DH-1234\",\n  \"location\": \"Banani, Dhaka\",\n  \"isAC\": true,\n  \"isWithDriver\": false,\n  \"isAvailable\": true\n}"
             }
           }
         },
         {
-          "name": "Update Car (Admin)",
+          "name": "Update Car (Host/Admin)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/cars/:id",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pricePerDay\": 60,\n  \"isAvailable\": true\n}"
+              "raw": "{\n  \"pricePerDay\": 6000,\n  \"rentalType\": \"PER_HOUR\",\n  \"isAvailable\": true,\n  \"location\": \"Gulshan, Dhaka\"\n}"
             }
           }
         },
         {
-          "name": "Delete Car (Admin)",
+          "name": "Delete Car (Host/Admin)",
           "request": {
             "method": "DELETE",
             "url": "{{baseUrl}}/cars/:id"
           }
         },
         {
-          "name": "Upload Car Images (Admin)",
+          "name": "Upload Car Images (Host/Admin)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/cars/:id/images",
@@ -219,7 +348,14 @@
           }
         },
         {
-          "name": "Delete Car Image (Admin)",
+          "name": "Set Primary Image (Host/Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/cars/images/:imageId/primary"
+          }
+        },
+        {
+          "name": "Delete Car Image (Host/Admin)",
           "request": {
             "method": "DELETE",
             "url": "{{baseUrl}}/cars/images/:imageId"
@@ -231,19 +367,19 @@
       "name": "Bookings",
       "item": [
         {
-          "name": "Create Booking (User)",
+          "name": "Create Booking (User/Host)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/bookings",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"pickupLocation\": \"Dhaka Airport\",\n  \"dropLocation\": \"Chittagong\",\n  \"startDate\": \"2026-05-01\",\n  \"endDate\": \"2026-05-05\"\n}"
+              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"pickupLocation\": \"Dhaka Airport\",\n  \"dropLocation\": \"Chittagong\",\n  \"startDate\": \"2026-05-01T10:00:00Z\",\n  \"endDate\": \"2026-05-05T10:00:00Z\",\n  \"tripType\": \"ONE_WAY\",\n  \"contactNumber\": \"01700000000\",\n  \"specialRequest\": \"Need early pickup\"\n}"
             }
           }
         },
         {
-          "name": "My Bookings (User)",
+          "name": "My Bookings (User/Host)",
           "request": {
             "method": "GET",
             "url": {
@@ -259,14 +395,14 @@
           }
         },
         {
-          "name": "Get Single Booking",
+          "name": "Get Single Booking (User/Admin/Host)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/bookings/:id"
           }
         },
         {
-          "name": "Cancel Booking (User)",
+          "name": "Cancel Booking (User/Host)",
           "request": {
             "method": "PATCH",
             "url": "{{baseUrl}}/bookings/:id/cancel"
@@ -325,7 +461,7 @@
             "url": "{{baseUrl}}/payments",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"<booking-uuid>\",\n  \"method\": \"stripe\",\n  \"transactionId\": \"txn_123\"\n}"
+              "raw": "{\n  \"bookingId\": \"<booking-uuid>\",\n  \"method\": \"STRIPE\",\n  \"amount\": 5000,\n  \"transactionId\": \"txn_123\"\n}"
             }
           }
         },
@@ -346,7 +482,7 @@
           }
         },
         {
-          "name": "Get Single Payment",
+          "name": "Get Single Payment (User/Admin)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/payments/:id"
@@ -416,7 +552,7 @@
             "url": "{{baseUrl}}/drivers",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"<user-uuid>\",\n  \"licenseNo\": \"DL-12345678\"\n}"
+              "raw": "{\n  \"userId\": \"<user-uuid>\",\n  \"licenseNo\": \"DL-12345678\",\n  \"licenseExpiry\": \"2028-12-31\"\n}"
             }
           }
         },
@@ -456,14 +592,34 @@
           }
         },
         {
-          "name": "Add Review (User)",
+          "name": "Get Driver Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reviews/driver?driverId=<driver-uuid>&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "driver"],
+              "query": [
+                {
+                  "key": "driverId",
+                  "value": "<driver-uuid>",
+                  "disabled": true
+                },
+                { "key": "page", "value": "1", "disabled": true },
+                { "key": "limit", "value": "10", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Review (User)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/reviews",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"rating\": 5,\n  \"comment\": \"Excellent car, very comfortable!\"\n}"
+              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"driverId\": \"<driver-uuid>\",\n  \"rating\": 5,\n  \"comment\": \"Excellent car, very comfortable!\"\n}"
             }
           }
         },
@@ -479,18 +635,6 @@
     {
       "name": "Coupons",
       "item": [
-        {
-          "name": "Create Coupon (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/coupons",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"code\": \"SAVE20\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20,\n  \"minAmount\": 100,\n  \"maxUses\": 50,\n  \"expiresAt\": \"2026-12-31\"\n}"
-            }
-          }
-        },
         {
           "name": "Get All Coupons (Admin)",
           "request": {
@@ -508,6 +652,18 @@
           }
         },
         {
+          "name": "Create Coupon (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/coupons",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SAVE20\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20,\n  \"minAmount\": 5000,\n  \"maxUses\": 50,\n  \"expiresAt\": \"2026-12-31\"\n}"
+            }
+          }
+        },
+        {
           "name": "Apply Coupon (User)",
           "request": {
             "method": "POST",
@@ -515,7 +671,7 @@
             "url": "{{baseUrl}}/coupons/apply",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"SAVE20\",\n  \"bookingAmount\": 250\n}"
+              "raw": "{\n  \"code\": \"SAVE20\",\n  \"bookingAmount\": 25000\n}"
             }
           }
         }
@@ -528,7 +684,12 @@
           "name": "Become Host (User)",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/hosts/become-host"
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/hosts/become-host",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
           }
         },
         {
@@ -546,7 +707,7 @@
             "url": "{{baseUrl}}/hosts/me",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Experienced host with a fleet of well-maintained cars.\"\n}"
+              "raw": "{\n  \"bio\": \"Experienced host with a fleet of well-maintained cars.\",\n  \"companyName\": \"ABC Car Rentals\"\n}"
             }
           }
         },
@@ -564,7 +725,11 @@
                 { "key": "search", "value": "toyota", "disabled": true },
                 { "key": "brand", "value": "Toyota", "disabled": true },
                 { "key": "fuelType", "value": "PETROL", "disabled": true },
-                { "key": "transmission", "value": "AUTOMATIC", "disabled": true },
+                {
+                  "key": "transmission",
+                  "value": "AUTOMATIC",
+                  "disabled": true
+                },
                 { "key": "isAvailable", "value": "true", "disabled": true },
                 { "key": "sortBy", "value": "pricePerDay", "disabled": true },
                 { "key": "sortOrder", "value": "asc", "disabled": true }

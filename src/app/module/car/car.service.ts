@@ -1,7 +1,11 @@
 import status from "http-status";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
-import { BookingStatus, UserRole } from "../../../generated/prisma/enums";
+import {
+  BookingStatus,
+  RentalType,
+  UserRole,
+} from "../../../generated/prisma/enums";
 import {
   deleteFileFromCloudinary,
   uploadFileToCloudinary,
@@ -11,36 +15,115 @@ import { ICreateCar, IUpdateCar } from "./car.interface";
 
 const getAllCars = async (query: Record<string, unknown>) => {
   const { where, orderBy, skip, take, page, limit } = buildQuery(query, {
-    searchFields: ["name", "brand", "model"],
+    searchFields: [],
     sortableFields: ["pricePerDay", "year", "createdAt"],
-    filterableFields: ["brand", "fuelType", "transmission", "bodyType", "isAvailable", "isAC", "isWithDriver", "seats", "location", "hostId"],
+    filterableFields: [
+      "brandId",
+      "modelId",
+      "fuelType",
+      "transmission",
+      "bodyType",
+      "rentalType",
+      "isAvailable",
+      "isAC",
+      "isWithDriver",
+      "seats",
+      "location",
+      "hostId",
+    ],
     defaultSortBy: "createdAt",
     defaultSortOrder: "desc",
   });
 
+  const andConditions = Array.isArray(where.AND) ? [...where.AND] : [];
+
+  const searchTerm =
+    typeof query.search === "string" ? query.search.trim() : "";
+  if (searchTerm) {
+    andConditions.push({
+      OR: [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { brand: { name: { contains: searchTerm, mode: "insensitive" } } },
+        { model: { name: { contains: searchTerm, mode: "insensitive" } } },
+      ],
+    });
+  }
+
+  const priceFrom = query.priceFrom;
+  if (priceFrom !== undefined && priceFrom !== null && priceFrom !== "") {
+    const fromValue = Number(priceFrom);
+    if (!Number.isNaN(fromValue)) {
+      andConditions.push({ pricePerDay: { gte: fromValue } });
+    }
+  }
+
+  const priceTo = query.priceTo;
+  if (priceTo !== undefined && priceTo !== null && priceTo !== "") {
+    const toValue = Number(priceTo);
+    if (!Number.isNaN(toValue)) {
+      andConditions.push({ pricePerDay: { lte: toValue } });
+    }
+  }
+
+  const whereClause = andConditions.length > 0 ? { AND: andConditions } : where;
+
   const [cars, total] = await Promise.all([
     prisma.car.findMany({
-      where,
+      where: whereClause,
       orderBy,
       skip,
       take,
       include: {
+        brand: true,
+        model: true,
         images: true,
-        host: { select: { id: true, isVerified: true, user: { select: { name: true } } } },
+        host: {
+          select: {
+            id: true,
+            isVerified: true,
+            user: { select: { name: true } },
+          },
+        },
       },
     }),
-    prisma.car.count({ where }),
+    prisma.car.count({ where: whereClause }),
   ]);
 
   return { data: cars, meta: buildMeta(total, page, limit) };
 };
 
 const resolveHostId = async (userId: string): Promise<string> => {
-  const hostProfile = await prisma.hostProfile.findUnique({ where: { userId } });
+  const hostProfile = await prisma.hostProfile.findUnique({
+    where: { userId },
+  });
   if (!hostProfile) {
     throw new AppError(status.BAD_REQUEST, "Host profile not found");
   }
   return hostProfile.id;
+};
+
+const validateBrandAndModel = async (brandId: string, modelId: string) => {
+  const [brand, model] = await Promise.all([
+    prisma.brand.findUnique({ where: { id: brandId } }),
+    prisma.carModel.findUnique({ where: { id: modelId } }),
+  ]);
+
+  if (!brand) {
+    throw new AppError(status.NOT_FOUND, "Brand not found");
+  }
+
+  if (!model) {
+    throw new AppError(status.NOT_FOUND, "Car model not found");
+  }
+
+  if (model.brandId !== brandId) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Selected car model does not belong to the selected brand",
+    );
+  }
+
+  return { brand, model };
 };
 
 const assertCarOwnership = async (carId: string, userId: string) => {
@@ -54,7 +137,10 @@ const assertCarOwnership = async (carId: string, userId: string) => {
   }
 
   if (!car.host || car.host.userId !== userId) {
-    throw new AppError(status.FORBIDDEN, "You do not have permission to manage this car");
+    throw new AppError(
+      status.FORBIDDEN,
+      "You do not have permission to manage this car",
+    );
   }
 
   return car;
@@ -68,8 +154,8 @@ const createCarProfile = async (
   const carExists = await prisma.car.findFirst({
     where: {
       name: payload.name,
-      brand: payload.brand,
-      model: payload.model,
+      brandId: payload.brandId,
+      modelId: payload.modelId,
       year: payload.year,
     },
   });
@@ -86,11 +172,13 @@ const createCarProfile = async (
     hostId = await resolveHostId(userId);
   }
 
+  await validateBrandAndModel(payload.brandId, payload.modelId);
+
   const car = await prisma.car.create({
     data: {
       name: payload.name,
-      brand: payload.brand,
-      model: payload.model,
+      brandId: payload.brandId,
+      modelId: payload.modelId,
       year: payload.year,
       bodyType: payload.bodyType,
       pricePerDay: payload.pricePerDay,
@@ -102,6 +190,7 @@ const createCarProfile = async (
       color: payload.color ?? null,
       registrationNo: payload.registrationNo ?? null,
       location: payload.location,
+      rentalType: payload.rentalType ?? RentalType.ANY,
       isAC: payload.isAC ?? true,
       isWithDriver: payload.isWithDriver ?? false,
       isAvailable: payload.isAvailable ?? true,
@@ -125,6 +214,18 @@ const updateCar = async (
     if (!car) throw new AppError(status.NOT_FOUND, "Car not found");
   }
 
+  const currentCar = await prisma.car.findUnique({ where: { id } });
+  if (!currentCar) {
+    throw new AppError(status.NOT_FOUND, "Car not found");
+  }
+
+  const nextBrandId = payload.brandId ?? currentCar.brandId;
+  const nextModelId = payload.modelId ?? currentCar.modelId;
+
+  if (payload.brandId || payload.modelId) {
+    await validateBrandAndModel(nextBrandId, nextModelId);
+  }
+
   return prisma.car.update({ where: { id }, data: payload });
 };
 
@@ -140,13 +241,20 @@ const deleteCar = async (id: string, userId: string, role: UserRole) => {
     where: {
       carId: id,
       status: {
-        in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.ONGOING],
+        in: [
+          BookingStatus.PENDING,
+          BookingStatus.CONFIRMED,
+          BookingStatus.ONGOING,
+        ],
       },
     },
   });
 
   if (activeBooking) {
-    throw new AppError(status.CONFLICT, "Cannot delete car with active bookings");
+    throw new AppError(
+      status.CONFLICT,
+      "Cannot delete car with active bookings",
+    );
   }
 
   await prisma.car.delete({ where: { id } });
@@ -200,7 +308,10 @@ const setPrimaryImage = async (
 
   if (role === UserRole.HOST) {
     if (!image.car.host || image.car.host.userId !== userId) {
-      throw new AppError(status.FORBIDDEN, "You do not have permission to manage this car");
+      throw new AppError(
+        status.FORBIDDEN,
+        "You do not have permission to manage this car",
+      );
     }
   }
 
@@ -234,7 +345,10 @@ const deleteCarImage = async (
 
   if (role === UserRole.HOST) {
     if (!image.car.host || image.car.host.userId !== userId) {
-      throw new AppError(status.FORBIDDEN, "You do not have permission to delete this image");
+      throw new AppError(
+        status.FORBIDDEN,
+        "You do not have permission to delete this image",
+      );
     }
   }
 
@@ -242,9 +356,14 @@ const deleteCarImage = async (
   await prisma.carImage.delete({ where: { id: imageId } });
 
   if (image.isPrimary) {
-    const next = await prisma.carImage.findFirst({ where: { carId: image.carId } });
+    const next = await prisma.carImage.findFirst({
+      where: { carId: image.carId },
+    });
     if (next) {
-      await prisma.carImage.update({ where: { id: next.id }, data: { isPrimary: true } });
+      await prisma.carImage.update({
+        where: { id: next.id },
+        data: { isPrimary: true },
+      });
     }
   }
 };

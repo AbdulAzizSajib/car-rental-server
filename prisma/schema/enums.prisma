@@ -57,6 +57,12 @@ enum BodyType {
     Van
 }
 
+enum RentalType {
+    ANY
+    PER_DAY
+    PER_HOUR
+}
+
 enum VerificationStatus {
     PENDING
     APPROVED

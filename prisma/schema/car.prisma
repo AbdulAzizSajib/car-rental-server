@@ -1,11 +1,14 @@
 model Car {
     id           String           @id @default(uuid(7))
     name         String
-    brand        String
-    model        String
+    brandId      String
+    modelId      String
+    brand        Brand            @relation(fields: [brandId], references: [id])
+    model        CarModel         @relation(fields: [modelId], references: [id])
     year         Int
     bodyType     BodyType // Missing in your schema
     pricePerDay  Float
+    rentalType   RentalType       @default(ANY)
     seats        Int
     transmission TransmissionType
     fuelType     FuelType
@@ -30,8 +33,10 @@ model Car {
     bookings Booking[]
     reviews  Review[]
 
-    @@index([brand])
+    @@index([brandId])
+    @@index([modelId])
     @@index([pricePerDay])
+    @@index([rentalType])
     @@index([hostId])
     @@index([location]) // Index for faster searching
 }
