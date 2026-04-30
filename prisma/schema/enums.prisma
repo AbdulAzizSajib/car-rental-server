@@ -34,27 +34,9 @@ enum TransmissionType {
     AUTOMATIC
 }
 
-enum FuelType {
-    PETROL
-    DIESEL
-    ELECTRIC
-    HYBRID
-}
-
 enum DiscountType {
     PERCENTAGE
     FIXED
-}
-
-enum BodyType {
-    Sedan
-    Wagon
-    Coupe
-    Hatchback
-    Pickup
-    Sport_coupe
-    Crossover
-    Van
 }
 
 enum RentalType {

@@ -10,6 +10,8 @@ const carRouter: Router = Router();
 
 carRouter.get("/", carController.getAllCars);
 
+carRouter.get("/:id", carController.getCarById);
+
 carRouter.post(
   "/create",
   checkAuth(UserRole.ADMIN, UserRole.HOST),

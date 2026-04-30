@@ -19,6 +19,18 @@ const getAllCars = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getCarById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const result = await carService.getCarById(id);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Car fetched successfully",
+    data: result,
+  });
+});
+
 const createCarProfile = catchAsync(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError(status.UNAUTHORIZED, "Unauthorized access");
@@ -132,6 +144,7 @@ const deleteCarImage = catchAsync(async (req: Request, res: Response) => {
 
 export const carController = {
   getAllCars,
+  getCarById,
   createCarProfile,
   updateCar,
   deleteCar,

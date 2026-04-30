@@ -6,12 +6,14 @@ model Car {
     brand        Brand            @relation(fields: [brandId], references: [id])
     model        CarModel         @relation(fields: [modelId], references: [id])
     year         Int
-    bodyType     BodyType // Missing in your schema
+    bodyTypeId   String
+    bodyType     BodyType         @relation(fields: [bodyTypeId], references: [id])
     pricePerDay  Float
     rentalType   RentalType       @default(ANY)
     seats        Int
     transmission TransmissionType
-    fuelType     FuelType
+    fuelTypeId   String
+    fuelType     FuelType         @relation(fields: [fuelTypeId], references: [id])
     mileage      Float?
 
     // Bangladesh Market specific
@@ -35,6 +37,8 @@ model Car {
 
     @@index([brandId])
     @@index([modelId])
+    @@index([bodyTypeId])
+    @@index([fuelTypeId])
     @@index([pricePerDay])
     @@index([rentalType])
     @@index([hostId])

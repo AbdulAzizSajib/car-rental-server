@@ -1,0 +1,6 @@
+model FuelType {
+    id    String  @id @default(uuid(7))
+    name  String  @unique // e.g., "Gasoline", "Flex Fuel (E85)"
+    image String? // Optional icon/illustration URL
+    cars  Car[]
+}

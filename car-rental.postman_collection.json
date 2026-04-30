@@ -270,6 +270,106 @@
       ]
     },
     {
+      "name": "Body Types",
+      "item": [
+        {
+          "name": "Get All Body Types",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/body-types?page=1&limit=20&search=sedan"
+          }
+        },
+        {
+          "name": "Get Single Body Type",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/body-types/:id"
+          }
+        },
+        {
+          "name": "Create Body Type (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/body-types",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sedan\",\n  \"image\": \"https://example.com/sedan.png\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Body Type (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/body-types/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sport coupe\",\n  \"image\": \"https://example.com/sport-coupe.png\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Body Type (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/body-types/:id"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fuel Types",
+      "item": [
+        {
+          "name": "Get All Fuel Types",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/fuel-types?page=1&limit=20&search=gasoline"
+          }
+        },
+        {
+          "name": "Get Single Fuel Type",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/fuel-types/:id"
+          }
+        },
+        {
+          "name": "Create Fuel Type (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/fuel-types",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gasoline\",\n  \"image\": \"https://example.com/gasoline.png\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Fuel Type (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/fuel-types/:id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Flex Fuel (E85)\",\n  \"image\": \"https://example.com/flex-fuel.png\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Fuel Type (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/fuel-types/:id"
+          }
+        }
+      ]
+    },
+    {
       "name": "Cars",
       "item": [
         {
@@ -277,7 +377,7 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/cars?page=1&limit=10&search=toyota&brandId=<brand-uuid>&modelId=<model-uuid>&fuelType=PETROL&transmission=AUTOMATIC&rentalType=PER_DAY&priceFrom=3000&priceTo=8000&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
+              "raw": "{{baseUrl}}/cars?page=1&limit=10&search=toyota&brandId=<brand-uuid>&modelId=<model-uuid>&bodyTypeId=<body-type-uuid>&fuelTypeId=<fuel-type-uuid>&transmission=AUTOMATIC&rentalType=PER_DAY&priceFrom=3000&priceTo=8000&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
               "host": ["{{baseUrl}}"],
               "path": ["cars"],
               "query": [
@@ -286,12 +386,9 @@
                 { "key": "search", "value": "toyota", "disabled": true },
                 { "key": "brandId", "value": "<brand-uuid>", "disabled": true },
                 { "key": "modelId", "value": "<model-uuid>", "disabled": true },
-                { "key": "fuelType", "value": "PETROL", "disabled": true },
-                {
-                  "key": "transmission",
-                  "value": "AUTOMATIC",
-                  "disabled": true
-                },
+                { "key": "bodyTypeId", "value": "<body-type-uuid>", "disabled": true },
+                { "key": "fuelTypeId", "value": "<fuel-type-uuid>", "disabled": true },
+                { "key": "transmission", "value": "AUTOMATIC", "disabled": true },
                 { "key": "rentalType", "value": "PER_DAY", "disabled": true },
                 { "key": "priceFrom", "value": "3000", "disabled": true },
                 { "key": "priceTo", "value": "8000", "disabled": true },
@@ -303,6 +400,13 @@
           }
         },
         {
+          "name": "Get Single Car",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/cars/:id"
+          }
+        },
+        {
           "name": "Create Car (Host/Admin)",
           "request": {
             "method": "POST",
@@ -310,7 +414,7 @@
             "url": "{{baseUrl}}/cars/create",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Corolla 2022\",\n  \"brandId\": \"<brand-uuid>\",\n  \"modelId\": \"<model-uuid>\",\n  \"year\": 2022,\n  \"bodyType\": \"SEDAN\",\n  \"pricePerDay\": 5000,\n  \"rentalType\": \"PER_DAY\",\n  \"seats\": 5,\n  \"transmission\": \"AUTOMATIC\",\n  \"fuelType\": \"PETROL\",\n  \"mileage\": 15000,\n  \"engineCapacity\": 1600,\n  \"color\": \"Silver\",\n  \"registrationNo\": \"DH-1234\",\n  \"location\": \"Banani, Dhaka\",\n  \"isAC\": true,\n  \"isWithDriver\": false,\n  \"isAvailable\": true\n}"
+              "raw": "{\n  \"name\": \"Corolla 2022\",\n  \"brandId\": \"<brand-uuid>\",\n  \"modelId\": \"<model-uuid>\",\n  \"year\": 2022,\n  \"bodyTypeId\": \"<body-type-uuid>\",\n  \"pricePerDay\": 5000,\n  \"rentalType\": \"PER_DAY\",\n  \"seats\": 5,\n  \"transmission\": \"AUTOMATIC\",\n  \"fuelTypeId\": \"<fuel-type-uuid>\",\n  \"mileage\": 15000,\n  \"engineCapacity\": 1600,\n  \"color\": \"Silver\",\n  \"registrationNo\": \"DH-1234\",\n  \"location\": \"Banani, Dhaka\",\n  \"isAC\": true,\n  \"isWithDriver\": false,\n  \"isAvailable\": true\n}"
             }
           }
         },
@@ -322,7 +426,7 @@
             "url": "{{baseUrl}}/cars/:id",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pricePerDay\": 6000,\n  \"rentalType\": \"PER_HOUR\",\n  \"isAvailable\": true,\n  \"location\": \"Gulshan, Dhaka\"\n}"
+              "raw": "{\n  \"pricePerDay\": 6000,\n  \"rentalType\": \"PER_HOUR\",\n  \"bodyTypeId\": \"<body-type-uuid>\",\n  \"fuelTypeId\": \"<fuel-type-uuid>\",\n  \"isAvailable\": true,\n  \"location\": \"Gulshan, Dhaka\"\n}"
             }
           }
         },
@@ -526,13 +630,18 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/drivers?page=1&limit=10&isAvailable=true",
+              "raw": "{{baseUrl}}/drivers?page=1&limit=10&isAvailable=true&status=APPROVED&location=Dhaka&search=DL-",
               "host": ["{{baseUrl}}"],
               "path": ["drivers"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "isAvailable", "value": "true", "disabled": true }
+                { "key": "isAvailable", "value": "true", "disabled": true },
+                { "key": "status", "value": "APPROVED", "disabled": true },
+                { "key": "location", "value": "Dhaka", "disabled": true },
+                { "key": "search", "value": "DL-", "disabled": true },
+                { "key": "sortBy", "value": "averageRating", "disabled": true },
+                { "key": "sortOrder", "value": "desc", "disabled": true }
               ]
             }
           }
@@ -552,7 +661,7 @@
             "url": "{{baseUrl}}/drivers",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"<user-uuid>\",\n  \"licenseNo\": \"DL-12345678\",\n  \"licenseExpiry\": \"2028-12-31\"\n}"
+              "raw": "{\n  \"userId\": \"<user-uuid>\",\n  \"licenseNo\": \"DL-12345678\",\n  \"licenseImage\": \"https://example.com/license.png\",\n  \"yearsOfExperience\": 5,\n  \"location\": \"Dhaka\"\n}"
             }
           }
         },
@@ -564,7 +673,7 @@
             "url": "{{baseUrl}}/drivers/:id",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"licenseNo\": \"DL-99999999\",\n  \"isAvailable\": false\n}"
+              "raw": "{\n  \"licenseNo\": \"DL-99999999\",\n  \"licenseImage\": \"https://example.com/license-new.png\",\n  \"yearsOfExperience\": 7,\n  \"location\": \"Chittagong\",\n  \"isAvailable\": false,\n  \"status\": \"APPROVED\"\n}"
             }
           }
         }
@@ -596,30 +705,52 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/reviews/driver?driverId=<driver-uuid>&page=1&limit=10",
+              "raw": "{{baseUrl}}/reviews/driver?driverId=<driver-uuid>&page=1&limit=10&sortBy=rating&sortOrder=desc",
               "host": ["{{baseUrl}}"],
               "path": ["reviews", "driver"],
               "query": [
-                {
-                  "key": "driverId",
-                  "value": "<driver-uuid>",
-                  "disabled": true
-                },
-                { "key": "page", "value": "1", "disabled": true },
-                { "key": "limit", "value": "10", "disabled": true }
+                { "key": "driverId", "value": "<driver-uuid>" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sortBy", "value": "rating", "disabled": true },
+                { "key": "sortOrder", "value": "desc", "disabled": true }
               ]
             }
           }
         },
         {
-          "name": "Create Review (User)",
+          "name": "Create Car Review (User)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/reviews",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"driverId\": \"<driver-uuid>\",\n  \"rating\": 5,\n  \"comment\": \"Excellent car, very comfortable!\"\n}"
+              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"rating\": 5,\n  \"comment\": \"Excellent car, very comfortable!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Driver Review (User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": \"<driver-uuid>\",\n  \"rating\": 5,\n  \"comment\": \"Driver was punctual and professional.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Review for Car & Driver (User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": \"<car-uuid>\",\n  \"driverId\": \"<driver-uuid>\",\n  \"rating\": 5,\n  \"comment\": \"Great experience all around.\"\n}"
             }
           }
         },
@@ -707,7 +838,7 @@
             "url": "{{baseUrl}}/hosts/me",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bio\": \"Experienced host with a fleet of well-maintained cars.\",\n  \"companyName\": \"ABC Car Rentals\"\n}"
+              "raw": "{\n  \"bio\": \"Experienced host with a fleet of well-maintained cars.\",\n  \"nidNumber\": \"1234567890\",\n  \"nidFrontImage\": \"https://example.com/nid-front.png\",\n  \"nidBackImage\": \"https://example.com/nid-back.png\",\n  \"address\": \"House 12, Road 5, Banani, Dhaka\",\n  \"emergencyContact\": \"01700000000\"\n}"
             }
           }
         },
@@ -716,20 +847,18 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/hosts/me/cars?page=1&limit=10&search=toyota&brand=Toyota&fuelType=PETROL&transmission=AUTOMATIC&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
+              "raw": "{{baseUrl}}/hosts/me/cars?page=1&limit=10&search=toyota&brandId=<brand-uuid>&modelId=<model-uuid>&fuelTypeId=<fuel-type-uuid>&transmission=AUTOMATIC&rentalType=PER_DAY&isAvailable=true&sortBy=pricePerDay&sortOrder=asc",
               "host": ["{{baseUrl}}"],
               "path": ["hosts", "me", "cars"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
                 { "key": "search", "value": "toyota", "disabled": true },
-                { "key": "brand", "value": "Toyota", "disabled": true },
-                { "key": "fuelType", "value": "PETROL", "disabled": true },
-                {
-                  "key": "transmission",
-                  "value": "AUTOMATIC",
-                  "disabled": true
-                },
+                { "key": "brandId", "value": "<brand-uuid>", "disabled": true },
+                { "key": "modelId", "value": "<model-uuid>", "disabled": true },
+                { "key": "fuelTypeId", "value": "<fuel-type-uuid>", "disabled": true },
+                { "key": "transmission", "value": "AUTOMATIC", "disabled": true },
+                { "key": "rentalType", "value": "PER_DAY", "disabled": true },
                 { "key": "isAvailable", "value": "true", "disabled": true },
                 { "key": "sortBy", "value": "pricePerDay", "disabled": true },
                 { "key": "sortOrder", "value": "asc", "disabled": true }
@@ -767,13 +896,14 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/hosts?page=1&limit=10&isVerified=true",
+              "raw": "{{baseUrl}}/hosts?page=1&limit=10&isVerified=true&verificationStatus=APPROVED",
               "host": ["{{baseUrl}}"],
               "path": ["hosts"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "isVerified", "value": "true", "disabled": true }
+                { "key": "isVerified", "value": "true", "disabled": true },
+                { "key": "verificationStatus", "value": "APPROVED", "disabled": true }
               ]
             }
           }

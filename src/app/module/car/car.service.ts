@@ -20,9 +20,9 @@ const getAllCars = async (query: Record<string, unknown>) => {
     filterableFields: [
       "brandId",
       "modelId",
-      "fuelType",
+      "fuelTypeId",
       "transmission",
-      "bodyType",
+      "bodyTypeId",
       "rentalType",
       "isAvailable",
       "isAC",
@@ -76,6 +76,8 @@ const getAllCars = async (query: Record<string, unknown>) => {
       include: {
         brand: true,
         model: true,
+        bodyType: true,
+        fuelType: true,
         images: true,
         host: {
           select: {
@@ -126,6 +128,26 @@ const validateBrandAndModel = async (brandId: string, modelId: string) => {
   return { brand, model };
 };
 
+const validateBodyAndFuelType = async (
+  bodyTypeId: string,
+  fuelTypeId: string,
+) => {
+  const [bodyType, fuelType] = await Promise.all([
+    prisma.bodyType.findUnique({ where: { id: bodyTypeId } }),
+    prisma.fuelType.findUnique({ where: { id: fuelTypeId } }),
+  ]);
+
+  if (!bodyType) {
+    throw new AppError(status.NOT_FOUND, "Body type not found");
+  }
+
+  if (!fuelType) {
+    throw new AppError(status.NOT_FOUND, "Fuel type not found");
+  }
+
+  return { bodyType, fuelType };
+};
+
 const assertCarOwnership = async (carId: string, userId: string) => {
   const car = await prisma.car.findUnique({
     where: { id: carId },
@@ -173,6 +195,7 @@ const createCarProfile = async (
   }
 
   await validateBrandAndModel(payload.brandId, payload.modelId);
+  await validateBodyAndFuelType(payload.bodyTypeId, payload.fuelTypeId);
 
   const car = await prisma.car.create({
     data: {
@@ -180,11 +203,11 @@ const createCarProfile = async (
       brandId: payload.brandId,
       modelId: payload.modelId,
       year: payload.year,
-      bodyType: payload.bodyType,
+      bodyTypeId: payload.bodyTypeId,
       pricePerDay: payload.pricePerDay,
       seats: payload.seats,
       transmission: payload.transmission,
-      fuelType: payload.fuelType,
+      fuelTypeId: payload.fuelTypeId,
       mileage: payload.mileage ?? null,
       engineCapacity: payload.engineCapacity ?? null,
       color: payload.color ?? null,
@@ -224,6 +247,13 @@ const updateCar = async (
 
   if (payload.brandId || payload.modelId) {
     await validateBrandAndModel(nextBrandId, nextModelId);
+  }
+
+  if (payload.bodyTypeId || payload.fuelTypeId) {
+    await validateBodyAndFuelType(
+      payload.bodyTypeId ?? currentCar.bodyTypeId,
+      payload.fuelTypeId ?? currentCar.fuelTypeId,
+    );
   }
 
   return prisma.car.update({ where: { id }, data: payload });
@@ -368,8 +398,40 @@ const deleteCarImage = async (
   }
 };
 
+const getCarById = async (id: string) => {
+  const car = await prisma.car.findUnique({
+    where: { id },
+    include: {
+      brand: true,
+      model: true,
+      bodyType: true,
+      fuelType: true,
+      images: true,
+      host: {
+        select: {
+          id: true,
+          isVerified: true,
+          user: { select: { name: true, image: true } },
+        },
+      },
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        include: { user: { select: { id: true, name: true } } },
+      },
+    },
+  });
+
+  if (!car) {
+    throw new AppError(status.NOT_FOUND, "Car not found");
+  }
+
+  return car;
+};
+
 export const carService = {
   getAllCars,
+  getCarById,
   createCarProfile,
   updateCar,
   deleteCar,

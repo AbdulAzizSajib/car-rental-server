@@ -1,0 +1,6 @@
+model BodyType {
+    id    String  @id @default(uuid(7))
+    name  String  @unique // e.g., "Sedan", "Sport coupe"
+    image String? // Optional icon/illustration URL
+    cars  Car[]
+}

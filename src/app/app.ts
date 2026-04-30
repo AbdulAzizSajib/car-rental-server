@@ -15,6 +15,8 @@ import { prisma } from "./lib/prisma";
 import carRouter from "./module/car/car.router";
 import brandRouter from "./module/brand/brand.router";
 import carModelRouter from "./module/car-model/car-model.router";
+import bodyTypeRouter from "./module/body-type/body-type.router";
+import fuelTypeRouter from "./module/fuel-type/fuel-type.router";
 import bookingRouter from "./module/booking/booking.router";
 import paymentRouter from "./module/payment/payment.router";
 import driverRouter from "./module/driver/driver.router";
@@ -76,6 +78,8 @@ app.get("/db-test", async (req, res) => {
 app.use("/cars", carRouter);
 app.use("/brands", brandRouter);
 app.use("/car-models", carModelRouter);
+app.use("/body-types", bodyTypeRouter);
+app.use("/fuel-types", fuelTypeRouter);
 app.use("/bookings", bookingRouter);
 app.use("/payments", paymentRouter);
 app.use("/drivers", driverRouter);

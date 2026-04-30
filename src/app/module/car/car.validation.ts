@@ -1,7 +1,5 @@
 import { z } from "zod";
 import {
-  BodyType,
-  FuelType,
   RentalType,
   TransmissionType,
 } from "../../../generated/prisma/enums";
@@ -11,7 +9,7 @@ const createCarSchema = z.object({
   brandId: z.string().min(1),
   modelId: z.string().min(1),
   year: z.number().int().min(1886),
-  bodyType: z.enum(Object.values(BodyType) as [string, ...string[]]),
+  bodyTypeId: z.string().min(1),
   pricePerDay: z.number().positive(),
   rentalType: z
     .enum(Object.values(RentalType) as [string, ...string[]])
@@ -20,7 +18,7 @@ const createCarSchema = z.object({
   transmission: z.enum(
     Object.values(TransmissionType) as [string, ...string[]],
   ),
-  fuelType: z.enum(Object.values(FuelType) as [string, ...string[]]),
+  fuelTypeId: z.string().min(1),
   mileage: z.number().positive().optional(),
   engineCapacity: z.number().int().positive().optional(),
   color: z.string().min(1).optional(),
@@ -36,7 +34,7 @@ const updateCarSchema = z.object({
   brandId: z.string().min(1).optional(),
   modelId: z.string().min(1).optional(),
   year: z.number().int().min(1886).optional(),
-  bodyType: z.enum(Object.values(BodyType) as [string, ...string[]]).optional(),
+  bodyTypeId: z.string().min(1).optional(),
   pricePerDay: z.number().positive().optional(),
   rentalType: z
     .enum(Object.values(RentalType) as [string, ...string[]])
@@ -45,7 +43,7 @@ const updateCarSchema = z.object({
   transmission: z
     .enum(Object.values(TransmissionType) as [string, ...string[]])
     .optional(),
-  fuelType: z.enum(Object.values(FuelType) as [string, ...string[]]).optional(),
+  fuelTypeId: z.string().min(1).optional(),
   mileage: z.number().positive().nullable().optional(),
   engineCapacity: z.number().int().positive().nullable().optional(),
   color: z.string().min(1).nullable().optional(),
