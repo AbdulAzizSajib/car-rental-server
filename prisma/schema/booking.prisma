@@ -10,7 +10,7 @@ model Booking {
 
     // Schedule
     startDate DateTime
-    endDate   DateTime
+    endDate   DateTime?
 
     // Pricing Breakdown
     basePrice  Float // Per day price * days
@@ -19,7 +19,7 @@ model Booking {
 
     // Coordination
     status         BookingStatus @default(PENDING)
-    tripType       String? // e.g., "ONE_WAY", "ROUND_TRIP"
+    tripType       TripType
     contactNumber  String? // Direct contact for this trip
     specialRequest String?       @db.Text
 
