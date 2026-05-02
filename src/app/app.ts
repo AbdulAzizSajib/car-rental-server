@@ -28,9 +28,15 @@ import hostRouter from "./module/host/host.router";
 const app: Express = express();
 
 app.set("trust proxy", true);
-
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), `src/app/templates`));
+
+// Stripe webhook (must be before body parsers — needs raw body)
+app.post(
+  "/api/v1/payments/webhook",
+  express.raw({ type: "application/json" }),
+  paymentController.handleStripeWebhookEvent,
+);
 
 app.use(
   cors({
@@ -56,7 +62,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // server health check
 app.get("/", (_req, res) => {
-  res.status(200).send("Skill SVG Server is running...");
+  res.status(200).send("Car renteal Server is running...");
 });
 
 app.use("/auth", authRouter);

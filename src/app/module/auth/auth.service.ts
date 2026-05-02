@@ -103,25 +103,15 @@ const getMe = async (user: IRequestUser) => {
   return isUserExist;
 };
 
-const getNewToken = async (refreshToken: string, sessionToken: string) => {
-  // Try exact match first, then decoded/encoded variants
-  let isSessionExits = await prisma.session.findUnique({
+const getNewToken = async (refreshToken: string, rawSessionToken: string) => {
+  // BetterAuth stores only the part before the "." in the session table
+  const sessionToken = rawSessionToken.includes(".")
+    ? (rawSessionToken.split(".")[0] as string)
+    : rawSessionToken;
+
+  const isSessionExits = await prisma.session.findUnique({
     where: { token: sessionToken },
   });
-
-  // Fallback: try decoded version (Google login may URL-encode the token)
-  if (!isSessionExits) {
-    try {
-      const decoded = decodeURIComponent(sessionToken);
-      if (decoded !== sessionToken) {
-        isSessionExits = await prisma.session.findUnique({
-          where: { token: decoded },
-        });
-      }
-    } catch {
-      // ignore decode errors
-    }
-  }
 
   if (!isSessionExits) {
     throw new AppError(status.UNAUTHORIZED, "Invalid session token");

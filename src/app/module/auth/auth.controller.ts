@@ -16,8 +16,7 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     httpStatusCode: status.CREATED,
     success: true,
-    message:
-      "Registration successful. Please verify your email to continue.",
+    message: "Registration successful. Please verify your email to continue.",
     data: result,
   });
 });
@@ -26,7 +25,10 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.loginUser(payload);
 
   // Email not verified — don't set tokens, ask for verification
-  if ("requiresEmailVerification" in result && result.requiresEmailVerification) {
+  if (
+    "requiresEmailVerification" in result &&
+    result.requiresEmailVerification
+  ) {
     sendResponse(res, {
       httpStatusCode: status.OK,
       success: true,
@@ -36,7 +38,12 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     return;
   }
 
-  const loginData = result as { accessToken: string; refreshToken: string; token: string; [key: string]: unknown };
+  const loginData = result as {
+    accessToken: string;
+    refreshToken: string;
+    token: string;
+    [key: string]: unknown;
+  };
   tokenUtils.setAccessTokenCookie(res, loginData.accessToken);
   tokenUtils.setRefreshTokenCookie(res, loginData.refreshToken);
   tokenUtils.setBetterAuthSessionCookie(res, loginData.token as string);
@@ -197,7 +204,7 @@ const googleLogin = catchAsync((req: Request, res: Response) => {
 
   const encodedRedirectPath = encodeURIComponent(redirectPath as string);
 
-  const callbackURL = `${envVars.BETTER_AUTH_URL}/api/v1/auth/google/success?redirect=${encodedRedirectPath}`;
+  const callbackURL = `${envVars.BETTER_AUTH_URL}/auth/google/success?redirect=${encodedRedirectPath}`;
 
   res.render("googleRedirect", {
     callbackURL: callbackURL,
@@ -254,7 +261,9 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
     );
   } catch (error) {
     console.error("Google Success - Error generating tokens:", error);
-    return res.redirect(`${envVars.FRONTEND_URL}/login?error=token_generation_failed`);
+    return res.redirect(
+      `${envVars.FRONTEND_URL}/login?error=token_generation_failed`,
+    );
   }
 });
 

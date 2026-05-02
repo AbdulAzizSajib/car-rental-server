@@ -3,14 +3,12 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { bearer, emailOTP, oAuthProxy } from "better-auth/plugins";
 import { prisma } from "./prisma";
 import { envVars } from "../config/env";
- 
+
 import { sendEmail } from "../utils/email";
 import { UserRole } from "../../generated/prisma/enums";
 
-
 export const auth = betterAuth({
   baseURL: envVars.BETTER_AUTH_URL,
-
   secret: envVars.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -60,7 +58,22 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
   },
 
+  socialProviders: {
+    google: {
+      clientId: envVars.GOOGLE_CLIENT_ID,
+      clientSecret: envVars.GOOGLE_CLIENT_SECRET,
+      accessType: "offline",
+      prompt: "select_account consent",
 
+      mapProfileToUser: () => {
+        return {
+          role: UserRole.USER,
+          emailVerified: true,
+          deletedAt: null,
+        };
+      },
+    },
+  },
 
   user: {
     additionalFields: {
@@ -79,7 +92,7 @@ export const auth = betterAuth({
   },
 
   redirectURLs: {
-    signIn: `${envVars.BETTER_AUTH_URL}/api/v1/auth/google/success`,
+    signIn: `${envVars.BETTER_AUTH_URL}/api/auth/google/success`,
   },
 
   trustedOrigins: [
@@ -88,8 +101,8 @@ export const auth = betterAuth({
   ],
 
   session: {
-    expiresIn: 60 * 60 * 60 * 24, 
-    updateAge: 60 * 60 * 60 * 24, 
+    expiresIn: 60 * 60 * 60 * 24,
+    updateAge: 60 * 60 * 60 * 24,
     cookieCache: {
       enabled: true,
       maxAge: 60 * 60 * 60 * 24,

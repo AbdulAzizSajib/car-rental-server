@@ -11,17 +11,22 @@ export const checkAuth =
   (...authRoles: UserRole[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const sessionToken = CookieUtils.getCookie(
+      const rawToken = CookieUtils.getCookie(
         req,
         "better-auth.session_token",
       );
 
-      if (!sessionToken) {
+      if (!rawToken) {
         throw new AppError(
           status.UNAUTHORIZED,
           "Unauthorized access! No session token provided.",
         );
       }
+
+      // BetterAuth stores only the part before the "." in the session table
+      const sessionToken = rawToken.includes(".")
+        ? (rawToken.split(".")[0] as string)
+        : rawToken;
 
       const session = await prisma.session.findUnique({
         where: { token: sessionToken },
