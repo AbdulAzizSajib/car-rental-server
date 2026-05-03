@@ -8,6 +8,7 @@ model Payment {
 
     // Gateway related
     transactionId   String? @unique
+    stripeEventId   String? @unique // Webhook idempotency এর জন্য
     gatewayResponse Json? // To store full API response from bKash/Nagad
 
     currency String    @default("BDT")
@@ -19,4 +20,5 @@ model Payment {
     booking Booking @relation(fields: [bookingId], references: [id])
 
     @@index([transactionId])
+    @@index([stripeEventId])
 }

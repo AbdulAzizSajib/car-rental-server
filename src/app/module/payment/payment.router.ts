@@ -1,11 +1,29 @@
 import { Router } from "express";
+import { z } from "zod";
 import { checkAuth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { UserRole } from "../../../generated/prisma/enums";
 import { paymentController } from "./payment.controller";
 import { paymentValidation } from "./payment.validation";
 
-const paymentRouter = Router();
+const paymentRouter: Router = Router();
+
+// Stripe routes
+paymentRouter.post(
+  "/stripe/create-checkout",
+  checkAuth(UserRole.USER),
+  validateRequest(z.object({ bookingId: z.uuid() })),
+  paymentController.createStripeCheckout,
+);
+
+// Raw body parser is applied at the app level for this path (see app.ts)
+paymentRouter.post("/stripe/webhook", paymentController.stripeWebhook);
+
+paymentRouter.get(
+  "/stripe/verify/:sessionId",
+  checkAuth(UserRole.USER),
+  paymentController.verifyStripePayment,
+);
 
 // User routes
 paymentRouter.post(

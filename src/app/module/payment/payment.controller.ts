@@ -5,6 +5,60 @@ import { sendResponse } from "../../shared/sendResponse";
 import { paymentService } from "./payment.service";
 import { UserRole } from "../../../generated/prisma/enums";
 
+const createStripeCheckout = catchAsync(async (req: Request, res: Response) => {
+  const { bookingId } = req.body;
+  const result = await paymentService.createStripeCheckoutSession(
+    req.user!.userId,
+    bookingId,
+  );
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Stripe checkout session created",
+    data: result,
+  });
+});
+
+const stripeWebhook = async (req: Request, res: Response) => {
+  const signatureHeader = req.headers["stripe-signature"];
+  const signature = Array.isArray(signatureHeader)
+    ? signatureHeader[0]
+    : signatureHeader;
+
+  if (!signature) {
+    res.status(400).json({ error: "Missing stripe-signature header" });
+    return;
+  }
+
+  try {
+    const result = await paymentService.handleStripeWebhook(
+      req.body,
+      signature,
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Webhook processing failed";
+    res.status(400).json({ error: message });
+  }
+};
+
+const verifyStripePayment = catchAsync(async (req: Request, res: Response) => {
+  const { sessionId } = req.params as { sessionId: string };
+  const result = await paymentService.verifyStripePayment(
+    sessionId,
+    req.user!.userId,
+  );
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Payment verified",
+    data: result,
+  });
+});
+
 const createPayment = catchAsync(async (req: Request, res: Response) => {
   const result = await paymentService.createPayment(req.user!.userId, req.body);
 
@@ -34,7 +88,11 @@ const getMyPayments = catchAsync(async (req: Request, res: Response) => {
 const getSinglePayment = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
   const isAdmin = req.user!.role === UserRole.ADMIN;
-  const result = await paymentService.getSinglePayment(id, req.user!.userId, isAdmin);
+  const result = await paymentService.getSinglePayment(
+    id,
+    req.user!.userId,
+    isAdmin,
+  );
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -76,4 +134,7 @@ export const paymentController = {
   getSinglePayment,
   updatePaymentStatus,
   getAllPayments,
+  createStripeCheckout,
+  stripeWebhook,
+  verifyStripePayment,
 };

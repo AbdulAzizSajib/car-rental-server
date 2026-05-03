@@ -8,7 +8,7 @@
 
 */
 -- DropIndex
-DROP INDEX "CarModel_brandId_idx";
+DROP INDEX IF EXISTS "CarModel_brandId_idx";
 
 -- AlterTable
 ALTER TABLE "Car" DROP COLUMN "bodyType",

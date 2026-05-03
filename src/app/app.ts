@@ -31,11 +31,11 @@ app.set("trust proxy", true);
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), `src/app/templates`));
 
-// Stripe webhook (must be before body parsers — needs raw body)
-app.post(
-  "/api/v1/payments/webhook",
+// Stripe webhook needs the raw body — attach raw parser only to that path,
+// before the JSON parser below replaces req.body.
+app.use(
+  "/payments/stripe/webhook",
   express.raw({ type: "application/json" }),
-  paymentController.handleStripeWebhookEvent,
 );
 
 app.use(

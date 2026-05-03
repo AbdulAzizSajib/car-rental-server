@@ -1,10 +1,184 @@
 import status from "http-status";
+import Stripe from "stripe";
 import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
+import { stripe } from "../../lib/stripe";
+import { envVars } from "../../config/env";
 import { Prisma } from "../../../generated/prisma/client";
-import { PaymentStatus } from "../../../generated/prisma/enums";
+import {
+  BookingStatus,
+  PaymentMethod,
+  PaymentStatus,
+} from "../../../generated/prisma/enums";
 import { buildMeta, buildQuery } from "../../utils/queryBuilder";
 import { ICreatePayment, IUpdatePaymentStatus } from "./payment.interface";
+
+const createStripeCheckoutSession = async (
+  userId: string,
+  bookingId: string,
+) => {
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, userId },
+    include: { car: true, payment: true, user: true },
+  });
+
+  if (!booking) {
+    throw new AppError(status.NOT_FOUND, "Booking not found");
+  }
+
+  const existingPayment = booking.payment;
+  if (existingPayment?.status === PaymentStatus.PAID) {
+    throw new AppError(status.CONFLICT, "Booking already paid");
+  }
+
+  let payment = existingPayment;
+  if (!payment) {
+    payment = await prisma.payment.create({
+      data: {
+        bookingId: booking.id,
+        amount: booking.totalPrice,
+        method: PaymentMethod.STRIPE,
+        status: PaymentStatus.PENDING,
+      },
+    });
+  }
+
+  const endDateLabel = booking.endDate
+    ? new Date(booking.endDate).toLocaleDateString()
+    : "open-ended";
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    customer_email: booking.user.email,
+    line_items: [
+      {
+        price_data: {
+          currency: "bdt",
+          product_data: {
+            name: `${booking.car.name} - Booking #${booking.id.slice(0, 8)}`,
+            description: `Booking from ${new Date(booking.startDate).toLocaleDateString()} to ${endDateLabel}`,
+          },
+          unit_amount: Math.round(Number(booking.totalPrice) * 100),
+        },
+        quantity: 1,
+      },
+    ],
+    metadata: {
+      bookingId: booking.id,
+      paymentId: payment.id,
+      userId,
+    },
+    success_url: `${envVars.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${envVars.FRONTEND_URL}/payment/cancel?booking_id=${booking.id}`,
+  });
+
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { transactionId: session.id, method: PaymentMethod.STRIPE },
+  });
+
+  return {
+    sessionId: session.id,
+    url: session.url,
+  };
+};
+
+const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      envVars.STRIPE.STRIPE_WEBHOOK_SECRET,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    throw new AppError(status.BAD_REQUEST, `Webhook Error: ${message}`);
+  }
+
+  // Idempotency check
+  const existingWebhookEvent = await prisma.payment.findFirst({
+    where: { stripeEventId: event.id },
+  });
+
+  if (existingWebhookEvent) {
+    return { received: true, alreadyProcessed: true };
+  }
+
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const metadata = session.metadata ?? {};
+      const bookingId = metadata.bookingId;
+      const paymentId = metadata.paymentId;
+
+      if (!bookingId || !paymentId) {
+        throw new AppError(
+          status.BAD_REQUEST,
+          "Missing booking or payment metadata on session",
+        );
+      }
+
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: paymentId },
+          data: {
+            status: PaymentStatus.PAID,
+            paidAt: new Date(),
+            gatewayResponse: session as unknown as Prisma.InputJsonValue,
+            stripeEventId: event.id,
+          },
+        });
+
+        await tx.booking.update({
+          where: { id: bookingId },
+          data: { status: BookingStatus.CONFIRMED },
+        });
+      });
+
+      break;
+    }
+
+    case "checkout.session.expired": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const paymentId = session.metadata?.paymentId;
+
+      if (!paymentId) break;
+
+      await prisma.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: PaymentStatus.CANCELLED,
+          gatewayResponse: session as unknown as Prisma.InputJsonValue,
+          stripeEventId: event.id,
+        },
+      });
+      break;
+    }
+  }
+
+  return { received: true };
+};
+
+const verifyStripePayment = async (sessionId: string, userId: string) => {
+  const payment = await prisma.payment.findFirst({
+    where: {
+      transactionId: sessionId,
+      booking: { userId },
+    },
+    include: {
+      booking: { include: { car: true } },
+    },
+  });
+
+  if (!payment) {
+    throw new AppError(status.NOT_FOUND, "Payment not found");
+  }
+
+  return payment;
+};
 
 const createPayment = async (userId: string, payload: ICreatePayment) => {
   const booking = await prisma.booking.findUnique({
@@ -16,7 +190,10 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
   }
 
   if (booking.userId !== userId) {
-    throw new AppError(status.FORBIDDEN, "You do not have access to this booking");
+    throw new AppError(
+      status.FORBIDDEN,
+      "You do not have access to this booking",
+    );
   }
 
   const existingPayment = await prisma.payment.findUnique({
@@ -33,7 +210,8 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
       data: {
         method: payload.method,
         transactionId: payload.transactionId ?? null,
-        gatewayResponse: (payload.gatewayResponse as Prisma.InputJsonValue) ?? Prisma.DbNull,
+        gatewayResponse:
+          (payload.gatewayResponse as Prisma.InputJsonValue) ?? Prisma.DbNull,
         status: PaymentStatus.PENDING,
         paidAt: null,
       },
@@ -47,7 +225,8 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
       amount: booking.totalPrice,
       method: payload.method,
       transactionId: payload.transactionId ?? null,
-      gatewayResponse: (payload.gatewayResponse as Prisma.InputJsonValue) ?? Prisma.DbNull,
+      gatewayResponse:
+        (payload.gatewayResponse as Prisma.InputJsonValue) ?? Prisma.DbNull,
     },
     include: { booking: true },
   });
@@ -103,7 +282,10 @@ const getSinglePayment = async (
   }
 
   if (!isAdmin && payment.booking.userId !== userId) {
-    throw new AppError(status.FORBIDDEN, "You do not have access to this payment");
+    throw new AppError(
+      status.FORBIDDEN,
+      "You do not have access to this payment",
+    );
   }
 
   return payment;
@@ -124,7 +306,9 @@ const updatePaymentStatus = async (
     paidAt: payload.status === PaymentStatus.PAID ? new Date() : null,
   };
   if (payload.transactionId) updateData.transactionId = payload.transactionId;
-  if (payload.gatewayResponse) updateData.gatewayResponse = payload.gatewayResponse as Prisma.InputJsonValue;
+  if (payload.gatewayResponse)
+    updateData.gatewayResponse =
+      payload.gatewayResponse as Prisma.InputJsonValue;
 
   return prisma.payment.update({ where: { id: paymentId }, data: updateData });
 };
@@ -164,4 +348,7 @@ export const paymentService = {
   getSinglePayment,
   updatePaymentStatus,
   getAllPayments,
+  createStripeCheckoutSession,
+  handleStripeWebhook,
+  verifyStripePayment,
 };

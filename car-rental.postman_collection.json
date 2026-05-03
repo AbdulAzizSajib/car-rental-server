@@ -558,6 +558,50 @@
       "name": "Payments",
       "item": [
         {
+          "name": "Stripe - Create Checkout Session (User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/payments/stripe/create-checkout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"<booking-uuid>\"\n}"
+            },
+            "description": "Creates a Stripe Checkout Session for the given booking and returns `{ sessionId, url }`. The server creates a PENDING Payment record (or reuses an existing non-PAID one) and stores the session id as `transactionId`. Redirect the user to `url`. 409 if the booking is already PAID."
+          }
+        },
+        {
+          "name": "Stripe - Webhook (Stripe -> Server)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Stripe-Signature", "value": "<stripe-signature-header>" }
+            ],
+            "url": "{{baseUrl}}/payments/stripe/webhook",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_123\",\n  \"type\": \"checkout.session.completed\",\n  \"data\": { \"object\": { \"id\": \"cs_test_123\", \"metadata\": { \"bookingId\": \"<booking-uuid>\", \"paymentId\": \"<payment-uuid>\", \"userId\": \"<user-uuid>\" } } }\n}"
+            },
+            "description": "Stripe calls this endpoint directly — do not call manually. The body must be the raw event payload signed by Stripe; the server verifies the signature against `STRIPE_WEBHOOK_SECRET`. Idempotent: returns `{ received: true, alreadyProcessed: true }` if the same `event.id` was already handled. Handles `checkout.session.completed` (marks Payment PAID + Booking CONFIRMED) and `checkout.session.expired` (marks Payment CANCELLED). For local testing: `stripe listen --forward-to localhost:5000/payments/stripe/webhook`."
+          }
+        },
+        {
+          "name": "Stripe - Verify Payment (User)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/payments/stripe/verify/:sessionId",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stripe", "verify", ":sessionId"],
+              "variable": [
+                { "key": "sessionId", "value": "cs_test_..." }
+              ]
+            },
+            "description": "Called by the frontend on the success redirect. `:sessionId` is the Stripe Checkout Session id (`cs_...`) returned by Create Checkout. Returns the Payment with its booking + car. Scoped to the authenticated user."
+          }
+        },
+        {
           "name": "Create Payment (User)",
           "request": {
             "method": "POST",
@@ -565,8 +609,9 @@
             "url": "{{baseUrl}}/payments",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"<booking-uuid>\",\n  \"method\": \"STRIPE\",\n  \"amount\": 5000,\n  \"transactionId\": \"txn_123\"\n}"
-            }
+              "raw": "{\n  \"bookingId\": \"<booking-uuid>\",\n  \"method\": \"BKASH\",\n  \"transactionId\": \"txn_123\",\n  \"gatewayResponse\": { \"raw\": \"<provider response>\" }\n}"
+            },
+            "description": "Generic manual payment record (non-Stripe flow). Amount is derived from the booking — do not send it. `method` must be one of: `BKASH`, `NAGAD`, `STRIPE`, `CASH_ON_DELIVERY`, `BANK_TRANSFER`. If a Payment already exists for the booking and is not PAID, it is updated back to PENDING with the new method/txn. 409 if already PAID, 403 if the booking belongs to another user."
           }
         },
         {
@@ -574,22 +619,33 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/payments/my?page=1&limit=10&status=PAID",
+              "raw": "{{baseUrl}}/payments/my?page=1&limit=10&status=PAID&sortBy=createdAt&sortOrder=desc",
               "host": ["{{baseUrl}}"],
               "path": ["payments", "my"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "status", "value": "PAID", "disabled": true }
+                { "key": "status", "value": "PAID", "disabled": true },
+                { "key": "sortBy", "value": "createdAt", "disabled": true },
+                { "key": "sortOrder", "value": "desc", "disabled": true }
               ]
-            }
+            },
+            "description": "Lists the authenticated user's payments with booking + car (with images). Filterable by `status` (PENDING, PAID, FAILED, REFUNDED, CANCELLED). Sortable by `createdAt` or `amount`."
           }
         },
         {
           "name": "Get Single Payment (User/Admin)",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/payments/:id"
+            "url": {
+              "raw": "{{baseUrl}}/payments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", ":id"],
+              "variable": [
+                { "key": "id", "value": "<payment-uuid>" }
+              ]
+            },
+            "description": "Returns a single payment with booking, car (incl. images), and user. Users only see their own payments; admins see any."
           }
         },
         {
@@ -597,15 +653,18 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/payments?page=1&limit=10&status=PAID",
+              "raw": "{{baseUrl}}/payments?page=1&limit=10&status=PAID&sortBy=createdAt&sortOrder=desc",
               "host": ["{{baseUrl}}"],
               "path": ["payments"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" },
-                { "key": "status", "value": "PAID", "disabled": true }
+                { "key": "status", "value": "PAID", "disabled": true },
+                { "key": "sortBy", "value": "createdAt", "disabled": true },
+                { "key": "sortOrder", "value": "desc", "disabled": true }
               ]
-            }
+            },
+            "description": "Admin-only list of all payments with booking, car (id/name/brand) and user (id/name/email). Same filters/sorts as `My Payments`."
           }
         },
         {
@@ -613,11 +672,19 @@
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/payments/:id/status",
+            "url": {
+              "raw": "{{baseUrl}}/payments/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", ":id", "status"],
+              "variable": [
+                { "key": "id", "value": "<payment-uuid>" }
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"PAID\",\n  \"transactionId\": \"txn_abc123\"\n}"
-            }
+              "raw": "{\n  \"status\": \"PAID\",\n  \"transactionId\": \"txn_abc123\",\n  \"gatewayResponse\": { \"raw\": \"<provider response>\" }\n}"
+            },
+            "description": "Admin-only manual status override. `status` must be one of: `PENDING`, `PAID`, `FAILED`, `REFUNDED`, `CANCELLED`. Sets `paidAt = now()` when status becomes PAID, otherwise clears it. `transactionId` and `gatewayResponse` are optional and only updated when supplied."
           }
         }
       ]
